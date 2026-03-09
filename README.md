@@ -49,18 +49,18 @@ As seguintes *issues* foram criadas para estruturar o início do projeto:
 - Escolher pad~rao de arquitetura
 - Planejar estruturas de APIs
 
-### Issues #4 - Modelagem do Banco de Dados
+### Issue #4 - Modelagem do Banco de Dados
 - Definir lingugaem de Banco de Dados
 - Definir entidades principais
 - Criar modelo conceitual
 - Estruturar tabelas e relacionamentos
 
-### Issues #5 - Estrutura Inicial do Frontend
+### Issue #5 - Estrutura Inicial do Frontend
 - Criar estrutura de telas no Flutter
 - Definir navegação entre elas
 - Criar layout inicial do aplicativo
 
-### Issues #6 - Configuração do Backend
+### Issue #6 - Configuração do Backend
 - Criar estrutura inicial do backend
 - Definir endpoints principais da API
 - Configurar ambiente de desenvolvimento
