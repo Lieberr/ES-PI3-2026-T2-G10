@@ -28,6 +28,10 @@ A equipe é composta por **5 integrantes**, e o desenvolvimento foi dividido em 
 | Matheus Henrique | Integração / Backend | Integração entre frontend, backend e banco de dados |
 | Luis Felipe | Banco de Dados | Modelagem do banco de dados e estrutura das tabelas |
 
+##  Mapa Mental MesclaInvest
+
+![Mapa mental MesclaInvest Preview](Mapa mental MesclaInvest.png)
+
 ## 💻 Issues Inicias do Projeto
 
 As seguintes *issues* foram criadas para estruturar o início do projeto:
