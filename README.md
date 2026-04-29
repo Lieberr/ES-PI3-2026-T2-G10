@@ -32,7 +32,7 @@ A equipe é composta por **5 integrantes**, e o desenvolvimento foi dividido em 
 
 ## 🧠 Mapa Mental MesclaInvest
 
-![Mapa mental MesclaInvest Preview](./img/Mapa_mental_MesclaInvest.png)
+![Mapa mental MesclaInvest Preview](.mescla_invest/img/Mapa_mental_MesclaInvest.png)
 
 ## 💻 Issues Iniciais do Projeto
 
