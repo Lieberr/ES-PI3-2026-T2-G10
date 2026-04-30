@@ -109,7 +109,8 @@ class LoginScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                  },
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: const Color.fromRGBO(21, 93, 252, 1),
@@ -125,7 +126,9 @@ class LoginScreen extends StatelessWidget {
 
               Center(
                 child: TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/cadastro');
+                  },
                   child: const Text.rich(
                     TextSpan(
                       text: "Não tem uma conta? ",
