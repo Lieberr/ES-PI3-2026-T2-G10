@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -50,16 +51,24 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Email
-              const Text("E-mail"),
+              const Text("E-mail",
+               style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              )),
               const SizedBox(height: 8),
 
               TextField(
                 decoration: InputDecoration(
                   hintText: "seu@email.com",
                   hintStyle: TextStyle(
-                    color: Colors.black.withOpacity(0.5)
+                    color: Colors.black.withOpacity(0.4)
                   ),
-                  prefixIcon: const Icon(Icons.email_outlined),
+                  prefixIcon: Icon(
+                    Icons.email_outlined,
+                    color: Colors.black.withOpacity(0.4),
+
+                  ),
                   filled: true,
                   fillColor: Colors.grey[200],
                   border: OutlineInputBorder(
@@ -72,13 +81,24 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Senha
-              const Text("Senha"),
+              const Text("Senha",
+               style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              )),
               const SizedBox(height: 8),
 
               TextField(
                 obscureText: true,
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.lock_outline),
+                  hintText: "Digite sua senha",
+                  hintStyle: TextStyle(
+                    color: Colors.black.withOpacity(0.4)
+                  ),
+                  prefixIcon: Icon(
+                    Icons.lock_outline,
+                    color: Colors.black.withOpacity(0.4),
+                    ),
                   suffixIcon: const Icon(Icons.visibility_outlined),
                   filled: true,
                   fillColor: Colors.grey[200],
@@ -89,20 +109,24 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
 
               Align(
                 alignment: Alignment.centerRight,
-                child: TextButton(
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color.fromARGB(255, 6, 64, 255)
+                child: GestureDetector(
+                  onTap: () {
+                    // Acao aqui
+                  },
+                  child: const Text(
+                    "Esqueci minha senha",
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 6, 64, 255),
+                    ),
                   ),
-                  onPressed: () {},
-                  child: const Text("Esqueci minha senha"),
                 ),
-              ),
+                ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
 
               // Botão
               SizedBox(
@@ -124,25 +148,28 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
+              
+
               Center(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/cadastro');
-                  },
-                  child: const Text.rich(
-                    TextSpan(
-                      text: "Não tem uma conta? ",
-                      style: TextStyle(color: Colors.black),
-                      children: [
-                        TextSpan(
-                          text: "Cadastre-se",
-                          style: TextStyle(
-                            color: Color.fromRGBO(21, 93, 252, 1), // 👈 só essa parte azul
-                            fontWeight: FontWeight.bold,
-                          ),
-                        )
-                      ],
-                    ),
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    text: "Não tem uma conta? ",
+                    style: const TextStyle(color: Colors.black),
+                    children: [
+                      TextSpan(
+                        text: "Cadastre-se",
+                        style: const TextStyle(
+                          color: Color.fromRGBO(21, 93, 252, 1),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Navigator.pushNamed(context, '/cadastro');
+                          },
+                          mouseCursor: SystemMouseCursors.click,
+                      ),
+                    ],
                   ),
                 ),
               ),
