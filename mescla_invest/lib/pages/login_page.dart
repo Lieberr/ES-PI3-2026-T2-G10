@@ -59,21 +59,36 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 8),
 
               TextField(
+                style: TextStyle(
+                  color: Colors.black.withOpacity(0.7),
+                ),
                 decoration: InputDecoration(
-                  hintText: "seu@email.com",
-                  hintStyle: TextStyle(
-                    color: Colors.black.withOpacity(0.4)
+                  labelText: "E-mail", // 👈 substitui hintText
+
+                  labelStyle: TextStyle(
+                    color: Colors.black.withOpacity(0.5),
                   ),
+
                   prefixIcon: Icon(
                     Icons.email_outlined,
                     color: Colors.black.withOpacity(0.4),
-
                   ),
+
                   filled: true,
                   fillColor: Colors.grey[200],
+
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
+                  ),
+
+                  // 👇 FOCO (igual cadastro)
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color.fromRGBO(21, 93, 252, 1),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -90,21 +105,40 @@ class LoginScreen extends StatelessWidget {
 
               TextField(
                 obscureText: true,
+                style: TextStyle(
+                  color: Colors.black.withOpacity(0.7),
+                ),
                 decoration: InputDecoration(
-                  hintText: "Digite sua senha",
-                  hintStyle: TextStyle(
-                    color: Colors.black.withOpacity(0.4)
+                  labelText: "Senha", // 👈 mesma ideia
+
+                  labelStyle: TextStyle(
+                    color: Colors.black.withOpacity(0.5),
                   ),
+
                   prefixIcon: Icon(
                     Icons.lock_outline,
                     color: Colors.black.withOpacity(0.4),
-                    ),
-                  suffixIcon: const Icon(Icons.visibility_outlined),
+                  ),
+
+                  suffixIcon: Icon(
+                    Icons.visibility_outlined,
+                    color: Colors.black.withOpacity(0.4),
+                  ),
+
                   filled: true,
                   fillColor: Colors.grey[200],
+
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
+                  ),
+
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color.fromRGBO(21, 93, 252, 1),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),

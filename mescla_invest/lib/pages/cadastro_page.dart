@@ -68,41 +68,71 @@ class _CadastroPageState extends State<CadastroPage> {
   }
 
   Widget buildInput({
-    required String label,
-    required IconData icon,
-    required TextEditingController controller,
-    String? Function(String?)? validator,
-    bool isPassword = false,
-    bool obscure = false,
-    VoidCallback? toggle,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: TextFormField(
-        controller: controller,
-        validator: validator,
-        obscureText: obscure,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          suffixIcon: isPassword
-              ? IconButton(
-                  icon: Icon(
-                    obscure ? Icons.visibility : Icons.visibility_off,
-                  ),
-                  onPressed: toggle,
-                )
-              : null,
-          filled: true,
-          fillColor: Colors.grey[200],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
+  required String label,
+  required IconData icon,
+  required TextEditingController controller,
+  String? Function(String?)? validator,
+  bool isPassword = false,
+  bool obscure = false,
+  VoidCallback? toggle,
+}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 15),
+    child: TextFormField(
+      controller: controller,
+      validator: validator,
+      obscureText: obscure,
+
+      // 👇 TEXTO DIGITADO
+      style: TextStyle(
+        color: Colors.black.withOpacity(1),
+      ),
+
+      decoration: InputDecoration(
+        labelText: label,
+
+        // 👇 LABEL
+        labelStyle: TextStyle(
+          color: Colors.black.withOpacity(0.4),
+        ),
+
+        // 👇 ÍCONE MAIS SUAVE
+        prefixIcon: Icon(
+          icon,
+          color: Colors.black.withOpacity(0.4),
+        ),
+
+        // 👇 ÍCONE DE SENHA
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  obscure ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.black.withOpacity(0.4),
+                ),
+                onPressed: toggle,
+              )
+            : null,
+
+        filled: true,
+        fillColor: Colors.grey[200],
+
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+
+        // 👇 cor quando clica (focus)
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color.fromRGBO(21, 93, 252, 1),
+            width: 1.5,
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +153,7 @@ class _CadastroPageState extends State<CadastroPage> {
             children: [
               const Text(
                 "Cadastre-se",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 5),
               const Text(
@@ -140,7 +170,7 @@ class _CadastroPageState extends State<CadastroPage> {
               const SizedBox(height: 8),
 
               buildInput(
-                label: "Nome completo",
+                label: "Digite seu nome completo",
                 icon: Icons.person,
                 controller: nomeController,
                 validator: (v) =>
@@ -155,7 +185,7 @@ class _CadastroPageState extends State<CadastroPage> {
               const SizedBox(height: 8),
 
               buildInput(
-                label: "E-mail",
+                label: "seu@email.com",
                 icon: Icons.email,
                 controller: emailController,
                 validator: validarEmail,
@@ -170,7 +200,7 @@ class _CadastroPageState extends State<CadastroPage> {
 
 
               buildInput(
-                label: "CPF",
+                label: "000.000.000-00",
                 icon: Icons.badge,
                 controller: cpfController,
                 validator: validarCPF,
@@ -185,7 +215,7 @@ class _CadastroPageState extends State<CadastroPage> {
               const SizedBox(height: 8),
 
               buildInput(
-                label: "Telefone celular",
+                label: "(00) 00000-0000",
                 icon: Icons.phone,
                 controller: telefoneController,
                 validator: validarTelefone,
