@@ -150,6 +150,7 @@ class LoginScreen extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () {
                     // Acao aqui
+                    Navigator.pushNamed(context, '/recuperar-senha');
                   },
                   child: const Text(
                     "Esqueci minha senha",

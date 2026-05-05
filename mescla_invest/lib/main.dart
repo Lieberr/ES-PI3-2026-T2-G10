@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mescla_invest/pages/login_page.dart';
 import 'package:mescla_invest/pages/cadastro_page.dart';
+import 'package:mescla_invest/pages/recuperar_senha.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const LoginScreen(),
         '/cadastro': (context) => const CadastroPage(),
+        '/recuperar-senha': (context) => const RecuperarSenhaPage(),
       },
     );
   }
