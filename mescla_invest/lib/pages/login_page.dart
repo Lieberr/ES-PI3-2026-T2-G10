@@ -20,7 +20,7 @@ class LoginScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue,
+                  color: Color.fromRGBO(21, 93, 252, 1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(Icons.rocket, color: Colors.white, size: 32),
