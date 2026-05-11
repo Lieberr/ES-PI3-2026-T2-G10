@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mescla_invest/pages/startups_page.dart';
+import 'package:mescla_invest/features/startups/startups_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mescla_invest/pages/login_page.dart';
-import 'package:mescla_invest/pages/cadastro_page.dart';
-import 'package:mescla_invest/pages/recuperar_senha.dart';
+import 'package:mescla_invest/features/auth/login_page.dart';
+import 'package:mescla_invest/features/auth/cadastro_page.dart';
+import 'package:mescla_invest/features/auth/recuperar_senha.dart';
 
-import 'package:mescla_invest/widgets/main_navigation.dart';
+import 'package:mescla_invest/features/startups/widgets/main_navigation.dart';
 
 void main() {
   runApp(const MyApp());
