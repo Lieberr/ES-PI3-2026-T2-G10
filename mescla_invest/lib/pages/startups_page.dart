@@ -38,14 +38,36 @@ class HomePage extends StatelessWidget {
                     ),
                   ),
 
-                  IconButton(
-                    onPressed: () {},
+                  PopupMenuButton<String>(
                     icon: const Icon(
                       Icons.filter_alt_outlined,
                       size: 24,
                       color: Colors.black87,
                     ),
-                  ),
+
+                    onSelected: (value) {
+                      print(value);
+                    },
+
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'Nova',
+                        child: Text('Nova (Ideia recentemente publicada)'),
+                      ),
+
+                      const PopupMenuItem(
+                        value: 'Em operação',
+                        child: Text('Em operação'),
+                      ),
+
+                      const PopupMenuItem(
+                        value: 'Em expansão',
+                        child: Text('Em expansão'),
+                      )
+                    ],
+
+
+                  )
                 ],
               ),
             ),
