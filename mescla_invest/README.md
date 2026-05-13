@@ -24,15 +24,15 @@ A equipe é composta por **5 integrantes**, e o desenvolvimento foi dividido em 
 
 | Integrante        | Área de Responsabilidade | Atividades |
 |------------------|--------------------------|-------------|
-| Gustavo Lieb     | Frontend                | Desenvolvimento das telas principais e navegação do aplicativo |
-| Leonardo Dionel  | Frontend                | Componentes de interface, integração com APIs |
-| Yuri Soares      | Backend                 | Desenvolvimento da API e regras de negócio |
-| Matheus Henrique | Integração / Backend    | Integração entre frontend, backend e banco de dados |
-| Luis Felipe      | Banco de Dados          | Modelagem do banco de dados e estrutura das tabelas |
+| Gustavo Lieb     | Frontend                  | Desenvolvimento das telas principais e navegação do aplicativo |
+| Luis Felipe      | Frontend / Banco de Dados | Componentes de interface, integração com APIs / Modelagem do banco de dados e estrutura das tabelas |
+| Yuri Soares      | Backend                   | Desenvolvimento da API e regras de negócio |
+| Matheus Henrique | Backend                   | Desenvolvimento de rotas e funções |
+| Leonardo Dionel  | Integração / Backend      | Integração entre frontend, backend e banco de dados |
 
 ## 🧠 Mapa Mental MesclaInvest
 
-![Mapa mental MesclaInvest Preview](./img/Mapa_mental_MesclaInvest.png)
+![Mapa mental MesclaInvest Preview](.mescla_invest/img/Mapa_mental_MesclaInvest.png)
 
 ## 💻 Issues Iniciais do Projeto
 
