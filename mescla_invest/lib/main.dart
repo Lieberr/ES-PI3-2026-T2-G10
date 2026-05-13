@@ -3,8 +3,14 @@ import 'package:mescla_invest/pages/login_page.dart';
 import 'package:mescla_invest/pages/cadastro_page.dart';
 import 'package:mescla_invest/pages/recuperar_senha.dart';
 import 'package:mescla_invest/pages/splash_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(const MyApp());
 }
 
