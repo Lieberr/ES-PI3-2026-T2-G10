@@ -1,6 +1,29 @@
 # Backend
-backend/node_modules
-backend/dist
-backend/.env
+/backend/node_modules/
+/backend/dist/
+/backend/.env
+/backend/firebase-service-account.json
+
+# OS and editor
+.DS_Store
+*.log
+*.pyc
+*.swp
+
+# Local IDE settings
+/.vscode/
+
+# Flutter/Dart generated
+/mescla_invest/.dart_tool/
+/mescla_invest/.pub/
+/mescla_invest/build/
+/mescla_invest/.packages
+/mescla_invest/.flutter-plugins
+/mescla_invest/.flutter-plugins-dependencies
+
+# Android build outputs
+/mescla_invest/android/app/debug/
+/mescla_invest/android/app/profile/
+/mescla_invest/android/app/release/
 
 servicesAccountKey.json
