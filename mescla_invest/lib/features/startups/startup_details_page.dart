@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'widgets/tabs/overview_tab.dart';
 import 'widgets/tabs/structure_tab.dart';
+import 'widgets/tabs/questions_tab.dart';
 
 class StartupDetailsPage extends StatelessWidget {
   final Map<String, dynamic> startup;
@@ -134,6 +135,7 @@ class StartupDetailsPage extends StatelessWidget {
                 child: TabBarView(children: [
                   const OverviewTab(),
                   const StructureTab(),
+                  const QuestionsTab(),
                 ])
               )
 
