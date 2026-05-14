@@ -118,7 +118,7 @@ class StartupDetailsPage extends StatelessWidget {
               // TABS
               const TabBar(
                 labelColor: Color(0xFF2563EB),
-                unselectedLabelColor: Colors.grey,
+                unselectedLabelColor: Colors.black,
                 indicatorColor: Color(0xFF2563EB),
 
                 tabs: [
@@ -184,17 +184,14 @@ class StartupDetailsPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
 
       decoration: BoxDecoration(
+        border: Border.all(
+          color: const Color.fromARGB(255, 225, 225, 225),
+          width: 1,
+        ),
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
 
-       boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 18,
-            spreadRadius: 1,
-            offset: const Offset(0, 6)
-          )
-       ]
+       
       ),
 
       child: Column(
@@ -212,7 +209,7 @@ class StartupDetailsPage extends StatelessWidget {
             Text(
               title,
               style: const TextStyle(
-                color: Colors.grey,
+                color: Colors.black,
               ),
             )
           ],
@@ -226,6 +223,7 @@ class StartupDetailsPage extends StatelessWidget {
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
+              color: Colors.black,
             ),
           ),
         ],

@@ -44,18 +44,23 @@ class OverviewTab extends StatelessWidget {
       padding: const EdgeInsets.all(18),
 
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 18,
-            spreadRadius: 1,
-            offset: const Offset(0, 6)
-          )
-        ]
+      border: Border.all(
+        color: const Color.fromARGB(255, 222, 222, 222),
+        width: 1
       ),
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+
+
+       boxShadow: [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.05),
+      blurRadius: 10,
+      offset: const Offset(0, 6),
+    ),
+  ],
+
+    ),
 
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,15 +122,18 @@ class OverviewTab extends StatelessWidget {
     padding: const EdgeInsets.all(18),
 
     decoration: BoxDecoration(
+      border: Border.all(
+        color: const Color.fromARGB(255, 222, 222, 222),
+        width: 1
+      ),
       color: Colors.white,
       borderRadius: BorderRadius.circular(18),
 
 
        boxShadow: [
     BoxShadow(
-      color: Colors.black.withOpacity(0.12),
-      blurRadius: 18,
-      spreadRadius: 1,
+      color: Colors.black.withOpacity(0.05),
+      blurRadius: 10,
       offset: const Offset(0, 6),
     ),
   ],
