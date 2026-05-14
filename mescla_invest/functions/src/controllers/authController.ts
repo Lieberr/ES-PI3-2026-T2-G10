@@ -1,68 +1,52 @@
 import { Request, Response } from "express";
-import { db } from "../firebase/firebase";
+import { db, auth } from "../firebase/firebase";
+import { Timestamp } from "firebase-admin/firestore";
 
 export async function register(req: Request, res: Response) {
-
   try {
+    const { nomeCompleto, email, cpf, telefone, senha } = req.body;
 
-    const {
-      nome,
+    if (!nomeCompleto || !email || !cpf || !telefone || !senha) {
+      return res.status(400).json({ error: "Preencha todos os campos obrigatórios" });
+    }
+
+    const userAuth = await auth.createUser({
       email,
-      cpf,
-      telefone
-    } = req.body;
-
-    // validação básica
-    if (!nome || !email || !cpf || !telefone) {
-      return res.status(400).json({
-        error: "Preencha todos os campos"
-      });
-    }
-
-    // verificar email existente
-    const emailSnapshot = await db
-      .collection("usuarios")
-      .where("email", "==", email)
-      .get();
-
-    if (!emailSnapshot.empty) {
-      return res.status(400).json({
-        error: "E-mail já cadastrado"
-      });
-    }
-
-    // verificar cpf existente
-    const cpfSnapshot = await db
-      .collection("usuarios")
-      .where("cpf", "==", cpf)
-      .get();
-
-    if (!cpfSnapshot.empty) {
-      return res.status(400).json({
-        error: "CPF já cadastrado"
-      });
-    }
-
-    // criar usuário
-    const user = await db.collection("usuarios").add({
-      nome,
-      email,
-      cpf,
-      telefone,
-      saldo: 10000,
-      createdAt: new Date()
+      password: senha,
+      displayName: nomeCompleto,
+      phoneNumber: telefone.startsWith('+') ? telefone : undefined // O Auth exige formato E.164 para telefone se for salvar lá
     });
+
+    const novoUsuario = {
+      nomeCompleto,
+      email,
+      CPF: cpf, // Exatamente como no seu exemplo
+      telefone,
+      uid: userAuth.uid,
+      mfaHabilitado: false, // Padrão inicial
+      criadoEm: Timestamp.now(),
+      atualizadoEm: Timestamp.now(),
+      saldo: 10000 // Mantendo o saldo inicial que você tinha definido
+    };
+
+    await db.collection("usuarios").doc(userAuth.uid).set(novoUsuario);
 
     return res.status(201).json({
-      message: "Usuário criado",
-      id: user.id
+      message: "Usuário cadastrado com sucesso",
+      uid: userAuth.uid
     });
 
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Erro no registro:", error);
 
-    return res.status(500).json({
-      error: "Erro interno"
-    });
+    // Tratamento de erros específicos do Firebase
+    if (error.code === 'auth/email-already-exists') {
+      return res.status(400).json({ error: "Este e-mail já está cadastrado." });
+    }
+    if (error.code === 'auth/invalid-password') {
+      return res.status(400).json({ error: "A senha deve ter pelo menos 6 caracteres." });
+    }
 
+    return res.status(500).json({ error: "Erro interno ao processar cadastro." });
   }
 }
