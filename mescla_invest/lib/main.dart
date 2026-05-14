@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'package:mescla_invest/features/auth/login_page.dart';
 import 'package:mescla_invest/features/auth/cadastro_page.dart';
 import 'package:mescla_invest/features/auth/recuperar_senha.dart';
+
 import 'package:mescla_invest/features/startups/widgets/main_navigation.dart';
 
 void main() async {
@@ -39,7 +40,6 @@ class MyApp extends StatelessWidget {
         '/cadastro': (context) => const CadastroPage(),
         '/recuperar-senha': (context) => const RecuperarSenhaPage(),
 
-        // App Principal
         '/main': (context) => const MainNavigation(),
       },
     );
