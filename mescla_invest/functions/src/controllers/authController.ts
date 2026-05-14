@@ -9,12 +9,11 @@ export async function register(req: Request, res: Response) {
       nome,
       email,
       cpf,
-      telefone,
-      senha
+      telefone
     } = req.body;
 
     // validação básica
-    if (!nome || !email || !cpf || !telefone || !senha) {
+    if (!nome || !email || !cpf || !telefone) {
       return res.status(400).json({
         error: "Preencha todos os campos"
       });
@@ -50,7 +49,6 @@ export async function register(req: Request, res: Response) {
       email,
       cpf,
       telefone,
-      senha,
       saldo: 10000,
       createdAt: new Date()
     });
