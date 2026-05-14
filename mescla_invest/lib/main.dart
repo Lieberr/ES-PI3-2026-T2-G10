@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'firebase_options.dart';
+
 import 'package:mescla_invest/features/auth/login_page.dart';
 import 'package:mescla_invest/features/auth/cadastro_page.dart';
 import 'package:mescla_invest/features/auth/recuperar_senha.dart';
-
 import 'package:mescla_invest/features/startups/widgets/main_navigation.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
@@ -23,18 +32,15 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      // Tela inicial
       initialRoute: '/main',
 
-      // Rotas do app
       routes: {
         '/login': (context) => const LoginScreen(),
         '/cadastro': (context) => const CadastroPage(),
         '/recuperar-senha': (context) => const RecuperarSenhaPage(),
-        
-        //App Principal
+
+        // App Principal
         '/main': (context) => const MainNavigation(),
-        
       },
     );
   }
