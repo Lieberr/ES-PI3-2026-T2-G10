@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/tabs/overview_tab.dart';
 
 class StartupDetailsPage extends StatelessWidget {
   final Map<String, dynamic> startup;
@@ -95,6 +96,7 @@ class StartupDetailsPage extends StatelessWidget {
 
                     Expanded(
                       child: infoCard(
+                        Icons.account_balance_wallet_outlined,
                         'Valor do Token',
                         startup['tokenValue'],
                       ),
@@ -104,7 +106,8 @@ class StartupDetailsPage extends StatelessWidget {
 
                     Expanded(
                       child: infoCard(
-                        'Capital',
+                        Icons.groups_2_outlined,
+                        'Capital Aportado',
                         startup['capital'],
                       ),
                     ),
@@ -131,37 +134,9 @@ class StartupDetailsPage extends StatelessWidget {
                   children: [
 
                     // VISÃO GERAL
-                    ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-
-                        const Text(
-                          'Sumário Executivo',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        const Text(
-                          'A startup desenvolve soluções tecnológicas inovadoras para transformar o mercado.',
-                          style: TextStyle(
-                            fontSize: 16,
-                            height: 1.6,
-                            color: Color(0xFF4B5563),
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        sectionCard(),
-                      ],
-                    ),
-
-                    // ESTRUTURA
-                    ListView(
+                    TabBarView(children: [
+                      const OverviewTab(),
+                      ListView(
                       padding: const EdgeInsets.all(16),
                       children: const [
 
@@ -174,6 +149,11 @@ class StartupDetailsPage extends StatelessWidget {
                         ),
                       ],
                     ),
+
+                    ]),
+
+                    // ESTRUTURA
+                    
 
                     // PERGUNTAS
                     ListView(
@@ -199,24 +179,44 @@ class StartupDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget infoCard(String title, String value) {
+  Widget infoCard(IconData icon, String title, String value) {
     return Container(
       padding: const EdgeInsets.all(16),
 
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
+
+       boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 18,
+            spreadRadius: 1,
+            offset: const Offset(0, 6)
+          )
+       ]
       ),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.grey,
+          Row(children: [
+            Icon(
+              icon,
+              size: 18,
+              color: const Color(0xff2563eb),
             ),
+            const SizedBox(width: 6),
+
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.grey,
+              ),
+            )
+          ],
+          
           ),
 
           const SizedBox(height: 8),
@@ -233,54 +233,7 @@ class StartupDetailsPage extends StatelessWidget {
     );
   }
 
-  static Widget sectionCard() {
-    return Container(
-      padding: const EdgeInsets.all(18),
+  
 
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          Text(
-            'Tokens',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          SizedBox(height: 18),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Total de Tokens'),
-              Text(
-                '100 000',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 12),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Disponíveis'),
-              Text(
-                '45 000',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
+
