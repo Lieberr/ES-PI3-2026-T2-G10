@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'buyToken_page.dart';
 
 class BalcaoPage extends StatelessWidget {
   const BalcaoPage({super.key});
@@ -70,9 +71,12 @@ class BalcaoPage extends StatelessWidget {
                   ),
                 ],
               ),
-            
+
+
 
               const SizedBox(height: 20),
+
+              
 
               // LISTA
               Expanded(
@@ -93,7 +97,7 @@ class BalcaoPage extends StatelessWidget {
                             color: Colors.grey.shade300,
                             width: 1,
                           ),
-                          
+
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.04),
@@ -198,7 +202,19 @@ class BalcaoPage extends StatelessWidget {
 
                                 Expanded(
                                   child: OutlinedButton.icon(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => BuyTokenPage(
+                                            nome: startup["nome"]!,
+                                            preco: startup["preco"]!,
+                                            imagem: startup["imagem"]!,
+                                            disponiveis: startup["tokens"]!,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                     icon: const Icon(Icons.shopping_cart_outlined),
                                     label: const Text('Comprar'),
 
