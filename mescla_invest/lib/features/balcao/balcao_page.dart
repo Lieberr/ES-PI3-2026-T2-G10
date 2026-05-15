@@ -88,6 +88,12 @@ class BalcaoPage extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(22),
+
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            width: 1,
+                          ),
+                          
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.04),
@@ -197,16 +203,16 @@ class BalcaoPage extends StatelessWidget {
                                     label: const Text('Comprar'),
 
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.blue,
+                                      foregroundColor: Color.fromRGBO(21, 93, 252, 1),
                                       side: const BorderSide(
-                                        color: Colors.blue,
+                                        color: Color.fromRGBO(21, 93, 252, 1),
                                         width: 2,
                                       ),
                                       padding:
-                                          const EdgeInsets.symmetric(vertical: 15),
+                                          const EdgeInsets.symmetric(vertical: 20),
                                       shape: RoundedRectangleBorder(
                                         borderRadius:
-                                            BorderRadius.circular(16),
+                                            BorderRadius.circular(10),
                                       ),
                                     ),
                                   ),
@@ -221,16 +227,16 @@ class BalcaoPage extends StatelessWidget {
                                     label: const Text('Vender'),
 
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.deepOrange,
+                                      foregroundColor: Color.fromRGBO(245, 73, 0, 1),
                                       side: const BorderSide(
-                                        color: Colors.deepOrange,
+                                        color: Color.fromRGBO(245, 73, 0, 1),
                                         width: 2,
                                       ),
                                       padding:
-                                          const EdgeInsets.symmetric(vertical: 15),
+                                          const EdgeInsets.symmetric(vertical: 20),
                                       shape: RoundedRectangleBorder(
                                         borderRadius:
-                                            BorderRadius.circular(16),
+                                            BorderRadius.circular(10),
                                       ),
                                     ),
                                   ),
