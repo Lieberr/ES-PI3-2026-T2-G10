@@ -10,7 +10,7 @@ class BalcaoPage extends StatelessWidget {
       {
         "nome": "HealthAI",
         "tokens": "12 000 tokens disponíveis",
-        "preco": "R\$ 25,00",
+        "preco": 25.00,
         "variacao": "+5.20%",
         "imagem":
             "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
@@ -18,7 +18,7 @@ class BalcaoPage extends StatelessWidget {
       {
         "nome": "AgriSmart",
         "tokens": "20 000 tokens disponíveis",
-        "preco": "R\$ 15,30",
+        "preco": 15.30,
         "variacao": "+3.80%",
         "imagem":
             "https://images.unsplash.com/photo-1501004318641-b39e6451bec6",
@@ -26,7 +26,7 @@ class BalcaoPage extends StatelessWidget {
       {
         "nome": "EcoTech Solutions",
         "tokens": "45 000 tokens disponíveis",
-        "preco": "R\$ 10,50",
+        "preco": 10.50,
         "variacao": "+2.50%",
         "imagem":
             "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
@@ -34,7 +34,7 @@ class BalcaoPage extends StatelessWidget {
       {
         "nome": "FinFlow",
         "tokens": "90 000 tokens disponíveis",
-        "preco": "R\$ 5,00",
+        "preco": 5.00,
         "variacao": "+0.50%",
         "imagem":
             "https://images.unsplash.com/photo-1556740749-887f6717d7e4",
@@ -47,6 +47,7 @@ class BalcaoPage extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -56,6 +57,7 @@ class BalcaoPage extends StatelessWidget {
               // TÍTULO
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
                 children: [
                   const Text(
                     'Balcão de Tokens',
@@ -72,23 +74,22 @@ class BalcaoPage extends StatelessWidget {
                 ],
               ),
 
-
-
               const SizedBox(height: 20),
-
-              
 
               // LISTA
               Expanded(
                 child: ListView.builder(
                   itemCount: startups.length,
+
                   itemBuilder: (context, index) {
                     final startup = startups[index];
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 18),
+
                       child: Container(
                         padding: const EdgeInsets.all(16),
+
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(22),
@@ -117,8 +118,9 @@ class BalcaoPage extends StatelessWidget {
                                 // FOTO
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(14),
+
                                   child: Image.network(
-                                    startup["imagem"]!,
+                                    startup["imagem"] as String,
                                     width: 62,
                                     height: 62,
                                     fit: BoxFit.cover,
@@ -132,10 +134,12 @@ class BalcaoPage extends StatelessWidget {
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
+
                                     children: [
 
                                       Text(
-                                        startup["nome"]!,
+                                        startup["nome"] as String,
+
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
@@ -145,7 +149,8 @@ class BalcaoPage extends StatelessWidget {
                                       const SizedBox(height: 6),
 
                                       Text(
-                                        startup["tokens"]!,
+                                        startup["tokens"] as String,
+
                                         style: TextStyle(
                                           color: Colors.grey.shade600,
                                           fontSize: 13,
@@ -157,11 +162,14 @@ class BalcaoPage extends StatelessWidget {
 
                                 // PREÇO
                                 Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.end,
+
                                   children: [
 
                                     Text(
-                                      startup["preco"]!,
+                                      "R\$ ${(startup["preco"] as double).toStringAsFixed(2)}",
+
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 22,
@@ -171,17 +179,22 @@ class BalcaoPage extends StatelessWidget {
                                     const SizedBox(height: 6),
 
                                     Container(
-                                      padding: const EdgeInsets.symmetric(
+                                      padding:
+                                          const EdgeInsets.symmetric(
                                         horizontal: 10,
                                         vertical: 4,
                                       ),
+
                                       decoration: BoxDecoration(
                                         color: Colors.green.shade100,
+
                                         borderRadius:
                                             BorderRadius.circular(30),
                                       ),
+
                                       child: Text(
-                                        startup["variacao"]!,
+                                        startup["variacao"] as String,
+
                                         style: TextStyle(
                                           color: Colors.green.shade700,
                                           fontWeight: FontWeight.w600,
@@ -200,33 +213,50 @@ class BalcaoPage extends StatelessWidget {
                             Row(
                               children: [
 
+                                // COMPRAR
                                 Expanded(
                                   child: OutlinedButton.icon(
                                     onPressed: () {
+
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => BuyTokenPage(
-                                            nome: startup["nome"]!,
-                                            preco: startup["preco"]!,
-                                            imagem: startup["imagem"]!,
-                                            disponiveis: startup["tokens"]!,
+                                            nome: startup["nome"] as String,
+                                            // 💡 CORREÇÃO: Transformamos o double em String formatada antes de passar para a próxima tela
+                                            preco: "R\$ ${(startup["preco"] as double).toStringAsFixed(2)}",
+                                            imagem: startup["imagem"] as String,
+                                            disponiveis: startup["tokens"] as String,
                                           ),
                                         ),
                                       );
                                     },
-                                    icon: const Icon(Icons.shopping_cart_outlined),
+
+                                    icon: const Icon(
+                                      Icons.shopping_cart_outlined,
+                                    ),
+
                                     label: const Text('Comprar'),
 
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Color.fromRGBO(21, 93, 252, 1),
+                                    style:
+                                        OutlinedButton.styleFrom(
+                                      foregroundColor:
+                                          const Color.fromRGBO(
+                                              21, 93, 252, 1),
+
                                       side: const BorderSide(
-                                        color: Color.fromRGBO(21, 93, 252, 1),
+                                        color: Color.fromRGBO(
+                                            21, 93, 252, 1),
                                         width: 2,
                                       ),
+
                                       padding:
-                                          const EdgeInsets.symmetric(vertical: 20),
-                                      shape: RoundedRectangleBorder(
+                                          const EdgeInsets.symmetric(
+                                        vertical: 20,
+                                      ),
+
+                                      shape:
+                                          RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(10),
                                       ),
@@ -236,21 +266,35 @@ class BalcaoPage extends StatelessWidget {
 
                                 const SizedBox(width: 14),
 
+                                // VENDER
                                 Expanded(
                                   child: OutlinedButton.icon(
                                     onPressed: () {},
-                                    icon: const Icon(Icons.attach_money),
+
+                                    icon:
+                                        const Icon(Icons.attach_money),
+
                                     label: const Text('Vender'),
 
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Color.fromRGBO(245, 73, 0, 1),
+                                    style:
+                                        OutlinedButton.styleFrom(
+                                      foregroundColor:
+                                          const Color.fromRGBO(
+                                              245, 73, 0, 1),
+
                                       side: const BorderSide(
-                                        color: Color.fromRGBO(245, 73, 0, 1),
+                                        color: Color.fromRGBO(
+                                            245, 73, 0, 1),
                                         width: 2,
                                       ),
+
                                       padding:
-                                          const EdgeInsets.symmetric(vertical: 20),
-                                      shape: RoundedRectangleBorder(
+                                          const EdgeInsets.symmetric(
+                                        vertical: 20,
+                                      ),
+
+                                      shape:
+                                          RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(10),
                                       ),
