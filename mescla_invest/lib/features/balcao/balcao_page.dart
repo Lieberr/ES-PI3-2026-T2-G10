@@ -314,34 +314,6 @@ class BalcaoPage extends StatelessWidget {
           ),
         ),
       ),
-
-      // NAVBAR
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-
-        items: const [
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.business_outlined),
-            label: 'Startups',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.storefront),
-            label: 'Balcão',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.pie_chart_outline),
-            label: 'Portfólio',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Perfil',
-          ),
-        ],
-      ),
     );
   }
 }
