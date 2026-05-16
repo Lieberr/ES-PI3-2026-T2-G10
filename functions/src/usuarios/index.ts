@@ -1,9 +1,3 @@
-/**
- * @author Leonardo Dionel
- * @ra 25010092
- *
- * Exportações do módulo de usuários.
- * Este arquivo é importado pelo index.ts raiz do Firebase Functions.
- */
+// Feito por Leonardo Dionel RA: 25010092
 
-export { cadastrarUsuario } from "./handlers/cadastrarUsuario";
+export {cadastrarUsuario} from "./handlers/cadastrarUsuario";

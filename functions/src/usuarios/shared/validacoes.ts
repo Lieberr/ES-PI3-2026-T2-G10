@@ -1,31 +1,24 @@
-/**
- * @author Leonardo Dionel
- * @ra 25010092
- *
- * Funções de validação de dados do usuário.
- * Não acessa o Firestore — só valida o formato dos campos.
- */
+// Feito por Leonardo Dionel RA: 25010092
 
 /**
- * Valida CPF usando o algoritmo oficial dos dois dígitos verificadores.
- * Aceita CPF com ou sem formatação (ex: "123.456.789-09" ou "12345678909").
+ * Valida CPF usando o algoritmo dos dois dígitos verificadores.
+ * Aceita CPF com ou sem formatação.
+ * @param {string} cpf - CPF a ser validado.
+ * @return {boolean} true se válido, false caso contrário.
  */
 export function validarCPF(cpf: string): boolean {
   const limpo = cpf.replace(/\D/g, "");
 
   if (limpo.length !== 11) return false;
 
-  // Rejeita sequências repetidas (ex: 111.111.111-11)
   if (/^(\d)\1+$/.test(limpo)) return false;
 
-  // Primeiro dígito verificador
   let soma = 0;
   for (let i = 0; i < 9; i++) soma += parseInt(limpo[i]) * (10 - i);
   let resto = (soma * 10) % 11;
   if (resto === 10 || resto === 11) resto = 0;
   if (resto !== parseInt(limpo[9])) return false;
 
-  // Segundo dígito verificador
   soma = 0;
   for (let i = 0; i < 10; i++) soma += parseInt(limpo[i]) * (11 - i);
   resto = (soma * 10) % 11;
@@ -35,9 +28,10 @@ export function validarCPF(cpf: string): boolean {
 }
 
 /**
- * Valida telefone celular brasileiro.
- * Aceita com ou sem formatação.
- * Celular: 11 dígitos (com DDD). Fixo: 10 dígitos.
+ * Valida telefone celular brasileiro com DDD.
+ * Aceita com ou sem formatação. Celular: 11 dígitos. Fixo: 10.
+ * @param {string} telefone - Telefone a ser validado.
+ * @return {boolean} true se válido, false caso contrário.
  */
 export function validarTelefone(telefone: string): boolean {
   const limpo = telefone.replace(/\D/g, "");
@@ -46,9 +40,18 @@ export function validarTelefone(telefone: string): boolean {
 
 /**
  * Valida se todos os campos obrigatórios do cadastro estão presentes.
- * Retorna lista de campos faltando (vazia se OK).
+ * @param {Record<string, unknown>} dados - Objeto com os dados recebidos.
+ * @return {string[]} Lista de campos ausentes (vazia se todos presentes).
  */
-export function validarCamposObrigatorios(dados: Record<string, unknown>): string[] {
-  const obrigatorios = ["nomeCompleto", "email", "cpf", "telefone", "senha"];
+export function validarCamposObrigatorios(
+  dados: Record<string, unknown>
+): string[] {
+  const obrigatorios = [
+    "nomeCompleto",
+    "email",
+    "cpf",
+    "telefone",
+    "senha",
+  ];
   return obrigatorios.filter((campo) => !dados[campo]);
 }
