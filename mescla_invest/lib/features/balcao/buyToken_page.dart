@@ -32,7 +32,6 @@ class _BuyTokenPageState extends State<BuyTokenPage> {
     precoUnitario = double.parse(
       widget.preco
           .replaceAll("R\$", "")
-          .replaceAll(".", "")
           .replaceAll(",", ".")
           .trim(),
     );
@@ -116,6 +115,49 @@ class _BuyTokenPageState extends State<BuyTokenPage> {
 
             const SizedBox(height: 20),
 
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Seu saldo disponível",
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      Text(
+                        "R\$ ",
+                        style: const TextStyle(
+                          fontSize: 30,
+                          color: Color(0xFF2962FF),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
             // INPUT
             TextField(
               controller: _controller,
@@ -135,6 +177,17 @@ class _BuyTokenPageState extends State<BuyTokenPage> {
               ),
             ),
 
+            SizedBox(height: 5),
+
+            Text(
+              "Disponíveis: ${widget.disponiveis} ",
+              style: const TextStyle(
+              fontSize: 12,
+              color: Color.fromARGB(255, 121, 121, 121),
+              fontWeight: FontWeight.bold,
+              ),
+            ),
+
             const SizedBox(height: 20),
 
             // CARD DINÂMICO (ATUALIZA EM TEMPO REAL)
@@ -146,24 +199,80 @@ class _BuyTokenPageState extends State<BuyTokenPage> {
                 border: Border.all(color: Colors.grey.shade300),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Quantidade: $quantidade tokens",
-                    style: const TextStyle(fontSize: 16),
+                  // QUANTIDADE
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Quantidade",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+
+                      Text(
+                        "$quantidade tokens",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Valor unitário: R\$ ${precoUnitario.toStringAsFixed(2)}",
+
+                  const SizedBox(height: 12),
+
+                  // VALOR UNITÁRIO
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Valor unitário",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+
+                      Text(
+                        "R\$ ${precoUnitario.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  const Divider(),
-                  Text(
-                    "Total: R\$ ${total.toStringAsFixed(2)}",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
+
+                  const SizedBox(height: 16),
+
+                  Divider(color: Colors.grey.shade300),
+
+                  const SizedBox(height: 16),
+
+                  // TOTAL
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Total",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      Text(
+                        "R\$ ${total.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -176,12 +285,16 @@ class _BuyTokenPageState extends State<BuyTokenPage> {
               child: ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  backgroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(vertical: 22),
+                  backgroundColor: Color.fromRGBO(21, 93, 252, 1),
+
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  )
                 ),
                 child: const Text(
                   "Confirmar compra",
-                  style: TextStyle(color: Colors.white), // Adicionado para melhor contraste
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500), // Adicionado para melhor contraste
                 ),
               ),
             ),
