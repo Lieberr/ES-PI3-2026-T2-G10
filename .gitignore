@@ -1,8 +1,12 @@
-# Backend
+# Backend (legado Express — preferir /functions)
 /backend/node_modules/
 /backend/dist/
 /backend/.env
 /backend/firebase-service-account.json
+
+# Firebase Functions
+/functions/node_modules/
+/functions/lib/
 
 # OS and editor
 .DS_Store
