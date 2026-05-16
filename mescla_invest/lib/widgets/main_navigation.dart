@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mescla_invest/features/startups/startups_page.dart';
+import 'package:mescla_invest/features/balcao/balcao_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -14,7 +15,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final List<Widget> pages = [
     const HomePage(),
-    const Center(child: Text('Balcão')),
+    const BalcaoPage(),
     const Center(child: Text('Portfólio')),
     const Center(child: Text('Perfil')),
   ];
