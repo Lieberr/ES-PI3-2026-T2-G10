@@ -1,0 +1,12 @@
+// Feito por Leonardo Dionel RA: 25010092
+
+import {getApps, initializeApp} from "firebase-admin/app";
+import {getFirestore} from "firebase-admin/firestore";
+import {getAuth} from "firebase-admin/auth";
+
+if (getApps().length === 0) {
+  initializeApp();
+}
+
+export const db = getFirestore();
+export const auth = getAuth();

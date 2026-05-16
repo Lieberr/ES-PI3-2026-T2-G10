@@ -1,11 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
-import {
-  onCall,
-  CallableRequest,
-  HttpsError,
-} from "firebase-functions/v2/https";
-import * as admin from "firebase-admin";
+import {onCall, CallableRequest, HttpsError} from "firebase-functions/v2/https";
+import {Timestamp} from "firebase-admin/firestore";
 import {CadastrarUsuarioInput} from "../types/usuario";
 import {
   salvarUsuario,
@@ -16,12 +12,13 @@ import {
   validarTelefone,
   validarCamposObrigatorios,
 } from "../shared/validacoes";
+import {auth} from "../../shared/firebase";
 
 export const cadastrarUsuario = onCall(
   async (request: CallableRequest<CadastrarUsuarioInput>) => {
     const data = request.data;
 
-    // 1. Verificar campos obrigatórios
+    // verifica se todos os campos chegaram
     const faltando = validarCamposObrigatorios(
       data as unknown as Record<string, unknown>
     );
@@ -34,15 +31,11 @@ export const cadastrarUsuario = onCall(
 
     const {nomeCompleto, email, cpf, telefone, senha} = data;
 
-    // 2. Validar formato do CPF
+    // valida CPF e telefone
     if (!validarCPF(cpf)) {
-      throw new HttpsError(
-        "invalid-argument",
-        "CPF inválido."
-      );
+      throw new HttpsError("invalid-argument", "CPF inválido.");
     }
 
-    // 3. Validar formato do telefone
     if (!validarTelefone(telefone)) {
       throw new HttpsError(
         "invalid-argument",
@@ -50,7 +43,7 @@ export const cadastrarUsuario = onCall(
       );
     }
 
-    // 4. Verificar se CPF já está cadastrado
+    // checa se o CPF já está cadastrado
     const cpfLimpo = cpf.replace(/\D/g, "");
     const usuarioExistente = await buscarUsuarioPorCpf(cpfLimpo);
     if (usuarioExistente) {
@@ -60,51 +53,53 @@ export const cadastrarUsuario = onCall(
       );
     }
 
-    // 5. Criar usuário no Firebase Auth
-    let userRecord: admin.auth.UserRecord;
+    // cria o usuário no Firebase Auth
+    let userRecord;
     try {
-      userRecord = await admin.auth().createUser({
+      userRecord = await auth.createUser({
         email,
         password: senha,
         displayName: nomeCompleto,
       });
     } catch (error: unknown) {
-      const firebaseError = error as { code?: string };
-      if (firebaseError.code === "auth/email-already-exists") {
+      const err = error as {code?: string};
+      if (err.code === "auth/email-already-exists") {
         throw new HttpsError(
           "already-exists",
           "Email já cadastrado na plataforma."
         );
       }
-      if (firebaseError.code === "auth/invalid-email") {
-        throw new HttpsError(
-          "invalid-argument",
-          "Formato de email inválido."
-        );
+      if (err.code === "auth/invalid-email") {
+        throw new HttpsError("invalid-argument", "Formato de email inválido.");
       }
-      if (firebaseError.code === "auth/weak-password") {
+      if (err.code === "auth/weak-password") {
         throw new HttpsError(
           "invalid-argument",
           "Senha fraca. Use no mínimo 6 caracteres."
         );
       }
+      throw new HttpsError("internal", "Erro ao criar conta. Tente novamente.");
+    }
+
+    // salva os dados extras no Firestore
+    // se falhar, deleta o usuário do Auth para não deixar conta pela metade
+    try {
+      await salvarUsuario({
+        uid: userRecord.uid,
+        nomeCompleto,
+        email,
+        cpf: cpfLimpo,
+        telefone: telefone.replace(/\D/g, ""),
+        criadoEm: Timestamp.now(),
+      });
+    } catch (error) {
+      await auth.deleteUser(userRecord.uid);
       throw new HttpsError(
         "internal",
-        "Erro ao criar conta. Tente novamente."
+        "Erro ao salvar dados. Tente novamente."
       );
     }
 
-    // 6. Salvar dados complementares no Firestore
-    await salvarUsuario({
-      uid: userRecord.uid,
-      nomeCompleto,
-      email,
-      cpf: cpfLimpo,
-      telefone: telefone.replace(/\D/g, ""),
-      criadoEm: admin.firestore.Timestamp.now(),
-    });
-
-    // 7. Retornar resposta de sucesso ao Flutter
     return {
       uid: userRecord.uid,
       mensagem: "Usuário cadastrado com sucesso.",
