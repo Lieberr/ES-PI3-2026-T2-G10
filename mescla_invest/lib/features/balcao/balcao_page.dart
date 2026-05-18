@@ -13,6 +13,9 @@ class _BalcaoPageState extends State<BalcaoPage> {
   final TextEditingController _searchController = TextEditingController();
 
   String search = "";
+  bool orderAsc = true;
+
+
 
   final List<Map<String, dynamic>> startups = [
     {
@@ -50,6 +53,25 @@ class _BalcaoPageState extends State<BalcaoPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+
+    sortStartups();
+  }
+
+    // Funcao para ordenar 
+  void sortStartups() {
+    startups.sort((a, b) {
+      final priceA = a["preco"] as double;
+      final priceB = b["preco"] as double;
+
+      return orderAsc
+            ? priceA.compareTo(priceB)
+            : priceB.compareTo(priceA);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
 
     final filteredStartups = startups.where((startup) {
@@ -80,7 +102,46 @@ class _BalcaoPageState extends State<BalcaoPage> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      showMenu(
+                        context: context,
+                        position: RelativeRect.fromLTRB(1000, 80, 0, 0),
+                        items: [
+                          PopupMenuItem(
+                            value: "asc",
+                            child: Row(
+                              children: const [
+                                Icon(Icons.arrow_upward),
+                                SizedBox(width: 10),
+                                Text("Menor preço -> Maior"),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: "desc",
+                            child: Row(
+                              children: const [
+                                Icon(Icons.arrow_downward),
+                                SizedBox(width: 10),
+                                Text("Maior preço -> Menor"),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ).then((value) {
+                        if (value == "asc") {
+                          setState(() {
+                            orderAsc = true;
+                            sortStartups();
+                          });
+                        } else if (value == "desc") {
+                          setState(() {
+                            orderAsc = false;
+                            sortStartups();
+                          });
+                        }
+                      });
+                    },
                     icon: const Icon(Icons.swap_vert),
                   ),
                 ],
@@ -244,6 +305,18 @@ class _BalcaoPageState extends State<BalcaoPage> {
                                     icon: const Icon(Icons
                                         .shopping_cart_outlined),
                                     label: const Text('Comprar'),
+
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Color.fromRGBO(21, 93, 252, 1),
+                                      side: const BorderSide(color: Color.fromRGBO(21, 93, 252, 1), width: 1),
+                                      minimumSize: const Size(double.infinity, 50),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      )
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 14),
@@ -269,6 +342,21 @@ class _BalcaoPageState extends State<BalcaoPage> {
                                     icon:
                                         const Icon(Icons.attach_money),
                                     label: const Text('Vender'),
+
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: const Color.fromRGBO(245, 73, 0, 1),
+                                      side: const BorderSide(
+                                        color: Color.fromRGBO(245, 73, 0, 1),
+                                        width: 1,
+                                      ),                    
+                                      minimumSize: const Size(double.infinity, 50),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      )
+                                    ),
                                   ),
                                 ),
                               ],
