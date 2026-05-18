@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mescla_invest/features/balcao/sellToken_page.dart';
 import 'buyToken_page.dart';
 
 class BalcaoPage extends StatelessWidget {
@@ -269,7 +270,19 @@ class BalcaoPage extends StatelessWidget {
                                 // VENDER
                                 Expanded(
                                   child: OutlinedButton.icon(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => SellTokenPage(
+                                            nome: startup["nome"] as String,
+                                            preco: "R\$ ${(startup["preco"] as double).toStringAsFixed(2)}",
+                                            imagem: startup["imagem"] as String,
+                                            disponiveis: startup["tokens"] as String,
+                                          ),
+                                        ),
+                                      );
+                                    },
 
                                     icon:
                                         const Icon(Icons.attach_money),
