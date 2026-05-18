@@ -14,6 +14,7 @@ class _BalcaoPageState extends State<BalcaoPage> {
 
   String search = "";
   bool orderAsc = true;
+  String sortMode = 'price';
 
 
 
@@ -60,15 +61,36 @@ class _BalcaoPageState extends State<BalcaoPage> {
   }
 
     // Funcao para ordenar 
-  void sortStartups() {
-    startups.sort((a, b) {
-      final priceA = a["preco"] as double;
-      final priceB = b["preco"] as double;
+      void sortStartups() {
+      startups.sort((a, b) {
+        if (sortMode == "price") {
+          final priceA = a["preco"] as double;
+          final priceB = b["preco"] as double;
 
-      return orderAsc
-            ? priceA.compareTo(priceB)
-            : priceB.compareTo(priceA);
-    });
+          return orderAsc
+              ? priceA.compareTo(priceB)
+              : priceB.compareTo(priceA);
+        }
+
+        if (sortMode == "high") {
+          return parseVariacao(b["variacao"])
+              .compareTo(parseVariacao(a["variacao"]));
+        }
+
+        if (sortMode == "low") {
+          return parseVariacao(a["variacao"])
+              .compareTo(parseVariacao(b["variacao"]));
+        }
+
+        return 0;
+      });
+    }
+
+  // Variacao do token
+  double parseVariacao(String v) {
+    return double.parse(
+      v.replaceAll('%', '').replaceAll('+', '').trim(),
+    );
   }
 
   @override
@@ -103,12 +125,12 @@ class _BalcaoPageState extends State<BalcaoPage> {
                   ),
                   IconButton(
                     onPressed: () {
-                      showMenu(
+                      showMenu<String>(
                         context: context,
                         position: RelativeRect.fromLTRB(1000, 80, 0, 0),
                         items: [
                           PopupMenuItem(
-                            value: "asc",
+                            value: "price_asc",
                             child: Row(
                               children: const [
                                 Icon(Icons.arrow_upward),
@@ -118,7 +140,7 @@ class _BalcaoPageState extends State<BalcaoPage> {
                             ),
                           ),
                           PopupMenuItem(
-                            value: "desc",
+                            value: "price_desc",
                             child: Row(
                               children: const [
                                 Icon(Icons.arrow_downward),
@@ -127,16 +149,51 @@ class _BalcaoPageState extends State<BalcaoPage> {
                               ],
                             ),
                           ),
+                          const PopupMenuDivider(),
+
+                          const PopupMenuItem(
+                            value: "high",
+                            child: Row(
+                              children: [
+                                Icon(Icons.trending_up),
+                                SizedBox(width: 10),
+                                Text("Maior alta")
+                              ],
+                            ),
+                          ),
+
+                          const PopupMenuItem(
+                            value: "low",
+                            child: Row(
+                              children: [
+                                Icon(Icons.trending_down),
+                                SizedBox(width: 10),
+                                Text("Maior queda"),
+                              ],
+                            ),
+                          ),
+                          
                         ],
                       ).then((value) {
-                        if (value == "asc") {
+                        if (value == "price_asc") {
                           setState(() {
                             orderAsc = true;
                             sortStartups();
                           });
-                        } else if (value == "desc") {
+                        } else if (value == "price_desc") {
                           setState(() {
                             orderAsc = false;
+                            sortStartups();
+                          });
+                        } else if (value == "high") {
+                          setState(() {
+                            sortMode = "high";
+                            sortStartups();
+                          });
+                        }
+                        else if (value == "low") {
+                          setState(() {
+                            sortMode = "low";
                             sortStartups();
                           });
                         }
