@@ -17,7 +17,6 @@ class _BalcaoPageState extends State<BalcaoPage> {
   String sortMode = 'price';
 
 
-
   final List<Map<String, dynamic>> startups = [
     {
       "nome": "HealthAI",
