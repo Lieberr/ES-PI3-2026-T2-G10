@@ -4,8 +4,6 @@ import {Carteira} from "../types/carteira";
 import {db} from "../../shared/firebase";
 import {Timestamp} from "firebase-admin/firestore";
 
-const carteirasCollection = db.collection("carteiras");
-
 /**
  * Cria uma carteira zerada para o usuário recém cadastrado.
  * @param {string} uid - UID do usuário no Firebase Auth.
@@ -17,5 +15,6 @@ export async function criarCarteira(uid: string): Promise<void> {
     saldo: 0,
     criadoEm: Timestamp.now(),
   };
+  const carteirasCollection = db.collection("carteiras");
   await carteirasCollection.doc(uid).set(carteira);
 }

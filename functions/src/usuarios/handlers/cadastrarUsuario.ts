@@ -95,7 +95,6 @@ export const cadastrarUsuario = onCall(
       });
 
       await criarCarteira(userRecord.uid);
-      
     } catch (error) {
       await auth.deleteUser(userRecord.uid);
       throw new HttpsError(
