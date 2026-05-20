@@ -195,12 +195,6 @@ class _ProfilePageState extends State<ProfilePage> {
               },
             ),
 
-            buildTile(
-              icon: Icons.phone_outlined,
-              title: "Telefone",
-              subtitle: "(19) 99999-9999",
-              onTap: () {},
-            ),
 
             //2FA
             Padding(
