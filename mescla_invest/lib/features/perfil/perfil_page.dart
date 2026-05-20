@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:mescla_invest/features/perfil/tabs/editarDadosPessoais_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -184,7 +185,14 @@ class _ProfilePageState extends State<ProfilePage> {
               icon: Icons.person_outline,
               title: "Dados Pessoais",
               subtitle: "Editar informações da conta",
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PersonalDataPage(),
+                  )
+                );
+              },
             ),
 
             buildTile(
