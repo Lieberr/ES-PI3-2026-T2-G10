@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:mescla_invest/features/perfil/tabs/editarDadosPessoais_page.dart';
+import 'package:mescla_invest/features/perfil/tabs/2FA_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -202,76 +203,73 @@ class _ProfilePageState extends State<ProfilePage> {
                 horizontal: 16,
                 vertical: 8,
               ),
-              child: Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                child: InkWell(
                   borderRadius: BorderRadius.circular(18),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xff2453ff).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const Email2FAPage(),
                       ),
-                      child: const Icon(
-                        Icons.shield_outlined,
-                        color: Color(0xff2453ff),
-                      ),
-                    ),
-
-                    const SizedBox(width: 15),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Autenticação 2FA",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xff2453ff).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-
-                          const SizedBox(height: 4),
-
-                          Text(
-                            is2FAEnabled
-                                ? "Proteção Ativada"
-                                : "Proteção Desativada",
-                            style: TextStyle(
-                              color: is2FAEnabled
-                                  ? Colors.green
-                                  : Colors.grey,
-                            ),
+                          child: const Icon(
+                            Icons.shield_outlined,
+                            color: Color(0xff2453ff),
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
 
-                    Switch(
-                      value: is2FAEnabled,
-                      activeColor: const Color(0xff2453ff),
-                      onChanged: (value) {
-                        setState(() {
-                          is2FAEnabled = value;
-                        });
+                        const SizedBox(width: 15),
 
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  value ? "2FA ativado com sucesso"
-                                        : "2FA desativado",
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Autenticação 2FA",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
                               ),
-                            );
-                      },
+
+                              const SizedBox(height: 4),
+
+                              Text(
+                                is2FAEnabled
+                                    ? "Proteção Ativada"
+                                    : "Clique para configurar",
+                                style: TextStyle(
+                                  color: is2FAEnabled
+                                      ? Colors.green
+                                      : Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
