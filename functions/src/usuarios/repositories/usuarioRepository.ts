@@ -3,8 +3,6 @@
 import {Usuario} from "../types/usuario";
 import {db} from "../../shared/firebase";
 
-const usuariosCollection = db.collection("usuarios");
-
 /**
  * Salva os dados do usuário no Firestore.
  * @param {Usuario} usuario - Dados do usuário a salvar.
