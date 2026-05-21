@@ -13,6 +13,7 @@ import {
   validarCamposObrigatorios,
 } from "../shared/validacoes";
 import {auth} from "../../shared/firebase";
+import {criarCarteira} from "../../carteira/repositories/carteiraRepository";
 
 export const cadastrarUsuario = onCall(
   async (request: CallableRequest<CadastrarUsuarioInput>) => {
@@ -92,6 +93,8 @@ export const cadastrarUsuario = onCall(
         telefone: telefone.replace(/\D/g, ""),
         criadoEm: Timestamp.now(),
       });
+
+      await criarCarteira(userRecord.uid);
     } catch (error) {
       await auth.deleteUser(userRecord.uid);
       throw new HttpsError(
