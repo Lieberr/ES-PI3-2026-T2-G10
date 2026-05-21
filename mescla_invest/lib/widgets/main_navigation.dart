@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mescla_invest/features/startups/startups_page.dart';
 import 'package:mescla_invest/features/balcao/balcao_page.dart';
+import 'package:mescla_invest/features/perfil/perfil_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -17,7 +18,7 @@ class _MainNavigationState extends State<MainNavigation> {
     const HomePage(),
     const BalcaoPage(),
     const Center(child: Text('Portfólio')),
-    const Center(child: Text('Perfil')),
+    const ProfilePage(),
   ];
 
   @override
