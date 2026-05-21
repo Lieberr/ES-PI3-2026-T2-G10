@@ -8,7 +8,7 @@ import {AtualizarSaldoInput} from "../types/carteira";
 import {Timestamp} from "firebase-admin/firestore";
 
 
-export const Depositar = onCall(
+export const depositar = onCall(
   async (request: CallableRequest<AtualizarSaldoInput>) => {
     const data = request.data;
     if (data.valor < 0) {
