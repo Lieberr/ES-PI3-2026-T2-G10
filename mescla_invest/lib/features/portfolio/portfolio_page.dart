@@ -371,8 +371,12 @@ Widget _infoCard({
   }
   Widget _buildChart() {
     final data = _getChartData(selectedFilter);
+    final marketData = _getMarketData(selectedFilter);
 
     return LineChart(
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      
       LineChartData(
         minY: 0,
         maxY: 12,
@@ -449,26 +453,44 @@ Widget _infoCard({
         ),
 
         lineBarsData: [
-          LineChartBarData(
-            spots: List.generate(
-              data.length,
-              (i) => FlSpot(i.toDouble(), data[i]),
+
+            // SUA CARTEIRA
+            LineChartBarData(
+              spots: List.generate(
+                data.length,
+                (i) => FlSpot(i.toDouble(), data[i]),
+              ),
+
+              isCurved: true,
+              color: Colors.blue,
+              barWidth: 4,
+
+              dotData: FlDotData(
+                show: true,
+              ),
+
+              belowBarData: BarAreaData(
+                show: true,
+                color: Colors.blue.withOpacity(0.15),
+              ),
             ),
 
-            isCurved: true,
-            color: Colors.blue,
-            barWidth: 4,
+            // MERCADO
+            LineChartBarData(
+              spots: List.generate(
+                marketData.length,
+                (i) => FlSpot(i.toDouble(), marketData[i]),
+              ),
 
-            dotData: FlDotData(
-              show: true,
-            ),
+              isCurved: true,
+              color: Colors.grey,
+              barWidth: 3,
 
-            belowBarData: BarAreaData(
-              show: true,
-              color: Colors.blue.withOpacity(0.15),
+              dotData: FlDotData(
+                show: false,
+              ),
             ),
-          ),
-        ],
+          ],
       ),
     );
   }
@@ -526,4 +548,23 @@ Widget _infoCard({
       return [6.0, 7.0, 8.0, 9.5, 10.25];
   }
 } 
+
+List<double> _getMarketData(TimeFilter filter) {
+  switch (filter) {
+    case TimeFilter.daily:
+      return [9.5, 9.7, 9.8, 9.9, 10.0];
+
+    case TimeFilter.weekly:
+      return [9.2, 9.4, 9.5, 9.7, 9.9];
+
+    case TimeFilter.monthly:
+      return [8.0, 8.4, 8.8, 9.2];
+
+    case TimeFilter.sixMonths:
+      return [6.5, 7.0, 7.5, 8.0, 9.0];
+
+    case TimeFilter.ytd:
+      return [5.5, 6.5, 7.2, 8.5, 9.3];
+  }
+}
 }
