@@ -1,8 +1,17 @@
 // Feito por Leonardo Dionel RA: 25010092
- 
+import {initializeApp, cert} from "firebase-admin/app";
+import {readFileSync} from "fs";
+
+const serviceAccount = JSON.parse(
+  readFileSync("./../servicesAccountKey.json", "utf8")
+);
+
+initializeApp({credential: cert(serviceAccount)});
+
+
 import {Startup} from "../startups/types/startup";
 import {db} from "../shared/firebase";
- 
+
 const startups: Startup[] = [
   {
     id: "ST001",
@@ -109,7 +118,22 @@ const startups: Startup[] = [
   },
 ];
 
-  async function seedStartups(): Promise<void> {
-    console.log("Iniciando seed de startups...")
-    
-  } 
+
+/**
+ * Cria a seed das startups
+ * @return {Promise<void>}
+ */
+async function seedStartups(): Promise<void> {
+  console.log("Iniciando seed de startups...");
+  for (const startup of startups) {
+    await db.collection("startups").doc(startup.id).set(startup);
+    console.log(`${startup.nome} salva.`);
+  }
+  console.log("Seed concluído! Todas as startups foram salvas.");
+  process.exit(0);
+}
+seedStartups().catch((err) => {
+  console.error("Erro no seed:", err);
+  process.exit(1);
+});
+

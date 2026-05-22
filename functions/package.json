@@ -9,7 +9,8 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions && npm run set-public",
     "logs": "firebase functions:log",
-    "set-public": "gcloud run services add-iam-policy-binding depositar --region=southamerica-east1 --member=allUsers --role=roles/run.invoker && gcloud run services add-iam-policy-binding sacar --region=southamerica-east1 --member=allUsers --role=roles/run.invoker"
+    "set-public": "gcloud run services add-iam-policy-binding depositar --region=southamerica-east1 --member=allUsers --role=roles/run.invoker && gcloud run services add-iam-policy-binding sacar --region=southamerica-east1 --member=allUsers --role=roles/run.invoker",
+    "seed": "ts-node --project tsconfig.json src/seed/seedStartups.ts"
   },
   "engines": {
     "node": "22"
@@ -26,6 +27,7 @@
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-import": "^2.25.4",
     "firebase-functions-test": "^3.4.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.1.6"
   },
   "private": true

@@ -20,7 +20,7 @@ export async function criarCarteira(uid: string): Promise<void> {
 }
 
 /**
- * Atualiza o saldo do usuario
+ * Registra a operação no banco de dados
  * @param {Operacao} operacao - UID do usuário no Firebase Auth.
  * @return {Promise<void>}
  */
