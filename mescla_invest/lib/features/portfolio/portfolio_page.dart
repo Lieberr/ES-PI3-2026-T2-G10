@@ -1,7 +1,26 @@
 import "package:flutter/material.dart";
+import 'package:fl_chart/fl_chart.dart';
 
-class PortfolioPage extends StatelessWidget {
+enum TimeFilter {
+  daily,
+  weekly,
+  monthly,
+  sixMonths,
+  ytd,
+}
+
+class PortfolioPage extends StatefulWidget {
   const PortfolioPage({super.key});
+
+  @override
+  State<PortfolioPage> createState() => _PortfolioPageState();
+}
+
+
+
+class _PortfolioPageState extends State<PortfolioPage> {
+  
+  TimeFilter selectedFilter = TimeFilter.monthly;
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +146,49 @@ class PortfolioPage extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
+                  //Filtros
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: TimeFilter.values.map((filter) {
+
+                      final isSelected = filter == selectedFilter;
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedFilter = filter;
+                          });
+                        },
+
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                    ? Colors.blue
+                                    : Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(12)
+                          ),
+
+                          child: Text(
+                            _filterLabel(filter),
+
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 24),
+
                   Container(
                     height: 150,
                     decoration: BoxDecoration(
@@ -138,12 +200,9 @@ class PortfolioPage extends StatelessWidget {
                       ),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.bar_chart,
-                        size: 60,
-                        color: Colors.blue,
-                      ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: _buildChart(),
                     ),
                   ),
                 ],
@@ -310,4 +369,161 @@ Widget _infoCard({
       ),
     );
   }
+  Widget _buildChart() {
+    final data = _getChartData(selectedFilter);
+
+    return LineChart(
+      LineChartData(
+        minY: 0,
+        maxY: 12,
+
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: 2,
+        ),
+
+        borderData: FlBorderData(
+          show: false,
+        ),
+
+        titlesData: FlTitlesData(
+
+          //TOPO
+          topTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+
+          //Direita
+          rightTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+
+          //EIXO X
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+
+              getTitlesWidget: (value, meta) {
+                final labels = _bottomLabels();
+
+                if (value.toInt() >= labels.length) {
+                  return const SizedBox();
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    labels[value.toInt()],
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+
+          //EIXO Y
+
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: 2,
+              reservedSize: 42,
+
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  "R\$ ${value.toInt()}k",
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+
+        lineBarsData: [
+          LineChartBarData(
+            spots: List.generate(
+              data.length,
+              (i) => FlSpot(i.toDouble(), data[i]),
+            ),
+
+            isCurved: true,
+            color: Colors.blue,
+            barWidth: 4,
+
+            dotData: FlDotData(
+              show: true,
+            ),
+
+            belowBarData: BarAreaData(
+              show: true,
+              color: Colors.blue.withOpacity(0.15),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<String> _bottomLabels() {
+  switch (selectedFilter) {
+
+    case TimeFilter.daily:
+      return ["09h", "11h", "13h", "15h", "18h"];
+
+    case TimeFilter.weekly:
+      return ["Seg", "Ter", "Qua", "Qui", "Sex"];
+
+    case TimeFilter.monthly:
+      return ["S1", "S2", "S3", "S4"];
+
+    case TimeFilter.sixMonths:
+      return ["Jan", "Fev", "Mar", "Abr", "Mai"];
+
+    case TimeFilter.ytd:
+      return ["Jan", "Mar", "Mai", "Jul", "Set"];
+  }
+}
+
+  String _filterLabel(TimeFilter filter) {
+    switch (filter) {
+      case TimeFilter.daily:
+      return "Dia";
+
+      case TimeFilter.weekly:
+      return "Semana";
+
+      case TimeFilter.monthly:
+      return "Mes";
+
+      case TimeFilter.sixMonths:
+      return "6M";
+
+      case TimeFilter.ytd:
+      return "YTD";
+    }
+  }
+
+  List<double> _getChartData(TimeFilter filter) {
+  switch (filter) {
+    case TimeFilter.daily:
+      return [9.8, 9.9, 10.0, 10.1, 10.25];
+    case TimeFilter.weekly:
+      return [9.5, 9.8, 9.7, 10.0, 10.25];
+    case TimeFilter.monthly:
+      return [8.5, 9.0, 9.8, 10.25];
+    case TimeFilter.sixMonths:
+      return [7.0, 7.8, 8.5, 9.0, 10.25];
+    case TimeFilter.ytd:
+      return [6.0, 7.0, 8.0, 9.5, 10.25];
+  }
+} 
 }
