@@ -9,7 +9,7 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions && npm run set-public",
     "logs": "firebase functions:log",
-    "set-public": "gcloud run services add-iam-policy-binding depositar --region=southamerica-east1 --member=allUsers --role=roles/run.invoker && gcloud run services add-iam-policy-binding sacar --region=southamerica-east1 --member=allUsers --role=roles/run.invoker",
+    "set-public": "gcloud run services add-iam-policy-binding getstartups --region=southamerica-east1 --member=allUsers --role=roles/run.invoker --project=mesclainvestluis && gcloud run services add-iam-policy-binding getstartupbyid --region=southamerica-east1 --member=allUsers --role=roles/run.invoker --project=mesclainvestluis && gcloud run services add-iam-policy-binding getstartupporestagio --region=southamerica-east1 --member=allUsers --role=roles/run.invoker --project=mesclainvestluis",
     "seed": "ts-node --project tsconfig.json src/seed/seedStartups.ts"
   },
   "engines": {

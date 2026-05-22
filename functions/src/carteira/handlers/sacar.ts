@@ -1,3 +1,5 @@
+// Feito por Leonardo Dionel RA: 25010092
+
 import {onCall, CallableRequest, HttpsError} from "firebase-functions/v2/https";
 import {AtualizarSaldoInput} from "../types/carteira";
 import {
