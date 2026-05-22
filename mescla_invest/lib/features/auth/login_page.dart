@@ -1,8 +1,80 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _auth = FirebaseAuth.instance;
+  final _emailController = TextEditingController();
+  final _senhaController = TextEditingController();
+
+  bool _carregando = false;
+  bool _senhaVisivel = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _senhaController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fazerLogin() async {
+    if (_carregando) return;
+
+    if (_emailController.text.trim().isEmpty || _senhaController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Preencha o e-mail e a senha.')),
+      );
+      return;
+    }
+
+    setState(() => _carregando = true);
+
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _senhaController.text,
+      );
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/main');
+      }
+    } on FirebaseAuthException catch (e) {
+      print('ERRO LOGIN: code=${e.code} | message=${e.message}');
+
+      String mensagem = 'Erro ao fazer login.';
+      if (e.code == 'user-not-found' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
+        mensagem = 'E-mail ou senha incorretos.';
+      } else if (e.code == 'too-many-requests') {
+        mensagem = 'Muitas tentativas. Tente novamente mais tarde.';
+      } else if (e.code == 'user-disabled') {
+        mensagem = 'Conta desativada. Entre em contato com o suporte.';
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(mensagem)));
+      }
+    } catch (e) {
+      print('ERRO GENERICO LOGIN: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro inesperado. Tente novamente.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +88,10 @@ class LoginScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 40),
 
-              // Ícone
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Color.fromRGBO(21, 93, 252, 1),
+                  color: const Color.fromRGBO(21, 93, 252, 1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(Icons.rocket, color: Colors.white, size: 32),
@@ -28,17 +99,10 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              const Text(
-                "Bem-vindo ao",
-                style: TextStyle(fontSize: 18),
-              ),
-
+              const Text("Bem-vindo ao", style: TextStyle(fontSize: 18)),
               const Text(
                 "MesclaInvest",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 8),
@@ -50,39 +114,29 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // Email
-              const Text("E-mail",
-               style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              )),
+              const Text(
+                "E-mail",
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
               const SizedBox(height: 8),
 
               TextField(
-                style: TextStyle(
-                  color: Colors.black.withOpacity(0.7),
-                ),
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: TextStyle(color: Colors.black.withOpacity(0.7)),
                 decoration: InputDecoration(
-                  labelText: "E-mail", // 👈 substitui hintText
-
-                  labelStyle: TextStyle(
-                    color: Colors.black.withOpacity(0.5),
-                  ),
-
+                  labelText: "E-mail",
+                  labelStyle: TextStyle(color: Colors.black.withOpacity(0.5)),
                   prefixIcon: Icon(
                     Icons.email_outlined,
                     color: Colors.black.withOpacity(0.4),
                   ),
-
                   filled: true,
                   fillColor: Colors.grey[200],
-
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-
-                  // 👇 FOCO (igual cadastro)
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
@@ -95,44 +149,39 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Senha
-              const Text("Senha",
-               style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              )),
+              const Text(
+                "Senha",
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
               const SizedBox(height: 8),
 
               TextField(
-                obscureText: true,
-                style: TextStyle(
-                  color: Colors.black.withOpacity(0.7),
-                ),
+                controller: _senhaController,
+                obscureText: !_senhaVisivel,
+                style: TextStyle(color: Colors.black.withOpacity(0.7)),
                 decoration: InputDecoration(
-                  labelText: "Senha", // 👈 mesma ideia
-
-                  labelStyle: TextStyle(
-                    color: Colors.black.withOpacity(0.5),
-                  ),
-
+                  labelText: "Senha",
+                  labelStyle: TextStyle(color: Colors.black.withOpacity(0.5)),
                   prefixIcon: Icon(
                     Icons.lock_outline,
                     color: Colors.black.withOpacity(0.4),
                   ),
-
-                  suffixIcon: Icon(
-                    Icons.visibility_outlined,
-                    color: Colors.black.withOpacity(0.4),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _senhaVisivel
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: Colors.black.withOpacity(0.4),
+                    ),
+                    onPressed: () =>
+                        setState(() => _senhaVisivel = !_senhaVisivel),
                   ),
-
                   filled: true,
                   fillColor: Colors.grey[200],
-
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
@@ -148,28 +197,21 @@ class LoginScreen extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: GestureDetector(
-                  onTap: () {
-                    // Acao aqui
-                    Navigator.pushNamed(context, '/recuperar-senha');
-                  },
+                  onTap: () => Navigator.pushNamed(context, '/recuperar-senha'),
                   child: const Text(
                     "Esqueci minha senha",
-                    style: TextStyle(
-                      color: Color.fromARGB(255, 6, 64, 255),
-                    ),
+                    style: TextStyle(color: Color.fromARGB(255, 6, 64, 255)),
                   ),
                 ),
-                ),
+              ),
 
               const SizedBox(height: 18),
 
-              // Botão
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                  },
+                  onPressed: _carregando ? null : _fazerLogin,
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: const Color.fromRGBO(21, 93, 252, 1),
@@ -177,13 +219,20 @@ class LoginScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text("Entrar"),
+                  child: _carregando
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Text("Entrar"),
                 ),
               ),
 
               const SizedBox(height: 20),
-
-              
 
               Center(
                 child: RichText(
@@ -202,7 +251,7 @@ class LoginScreen extends StatelessWidget {
                           ..onTap = () {
                             Navigator.pushNamed(context, '/cadastro');
                           },
-                          mouseCursor: SystemMouseCursors.click,
+                        mouseCursor: SystemMouseCursors.click,
                       ),
                     ],
                   ),
