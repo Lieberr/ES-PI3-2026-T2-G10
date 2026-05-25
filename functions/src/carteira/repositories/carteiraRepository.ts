@@ -3,6 +3,7 @@
 import {Carteira, Operacao} from "../types/carteira";
 import {db} from "../../shared/firebase";
 import {Timestamp} from "firebase-admin/firestore";
+import {TransacaoPrimaria, TokenUsuario} from "../types/transacao";
 
 /**
  * Cria uma carteira zerada para o usuário recém cadastrado.
@@ -21,7 +22,7 @@ export async function criarCarteira(uid: string): Promise<void> {
 
 /**
  * Registra a operação no banco de dados
- * @param {Operacao} operacao - UID do usuário no Firebase Auth.
+ * @param {Operacao} operacao - Dados da operação
  * @return {Promise<void>}
  */
 export async function registrarOperacao(operacao: Operacao): Promise<void> {
@@ -53,4 +54,52 @@ export async function buscarCarteira(uid: string): Promise<Carteira | null> {
   const doc = await carteirasCollection.doc(uid).get();
   if (!doc.exists) return null;
   return doc.data() as Carteira;
+}
+
+
+/**
+ * busca os tokens do usuario
+ * @param {string} uid - UID do usuário no Firebase Auth.
+ * @return {Promise<TokenUsuario[] | null>}
+ */
+export async function buscarTokenUsuario(uid: string): Promise<TokenUsuario[] | null> {
+  const tokensCollection = db
+    .collection("carteiras")
+    .doc(uid)
+    .collection("tokens");
+  const snap = await tokensCollection.get();
+
+  if(snap.empty) return null;
+
+  const tokens: TokenUsuario[] = snap.docs.map((doc) => ({
+    startupId:doc.id,
+    ...doc.data(),
+  })) as TokenUsuario[]
+
+  return tokens
+}
+
+
+/**
+ * Atualiza os tokens do usuario
+ * @param {string} uid - UID do usuário no Firebase Auth.
+ * @param {string} startupId - ID da startup
+ * @param {number} novaQuantidade - Nova quantidade de tokens do usuario
+ * @return {Promise<void>}
+ */
+export async function atualizarTokenUsuario(uid: string, startupId: string, novaQuantidade: number): Promise<void> {
+  await db.collection("carteiras").doc(uid).collection("tokens").doc(startupId).set(
+    {quantidade: novaQuantidade},
+    {merge: true}
+  );
+}
+
+
+/**
+ * Registra a transacao 
+ * @param {TransacaoPrimaria} transacao - Dados da transação primaria
+ * @return {Promise<void>}
+ */
+export async function registrarTransacaoPrimaria(transacao: TransacaoPrimaria): Promise<void> {
+  await db.collection("mercadoPrimario").doc().set(transacao)
 }

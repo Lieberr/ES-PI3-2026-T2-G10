@@ -21,5 +21,8 @@ export interface TransacaoSecundaria {
 }
 
 export interface TokenUsuario {
+  startupId: string;
   quantidade: number;
+  precoMedio: number;
+  valorInvestido: number;
 }
