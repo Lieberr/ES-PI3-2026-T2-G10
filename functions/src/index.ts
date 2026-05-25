@@ -9,3 +9,4 @@ setGlobalOptions({
 
 export * from "./usuarios";
 export * from "./carteira";
+export * from "./startups";

@@ -7,8 +7,10 @@
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "deploy": "firebase deploy --only functions && npm run set-public",
+    "logs": "firebase functions:log",
+    "set-public": "gcloud run services add-iam-policy-binding getstartups --region=southamerica-east1 --member=allUsers --role=roles/run.invoker --project=mesclainvestluis && gcloud run services add-iam-policy-binding getstartupbyid --region=southamerica-east1 --member=allUsers --role=roles/run.invoker --project=mesclainvestluis && gcloud run services add-iam-policy-binding getstartupporestagio --region=southamerica-east1 --member=allUsers --role=roles/run.invoker --project=mesclainvestluis",
+    "seed": "ts-node --project tsconfig.json src/seed/seedStartups.ts"
   },
   "engines": {
     "node": "22"
@@ -25,6 +27,7 @@
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-import": "^2.25.4",
     "firebase-functions-test": "^3.4.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.1.6"
   },
   "private": true
