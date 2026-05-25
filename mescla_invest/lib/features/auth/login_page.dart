@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,7 +11,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _auth = FirebaseAuth.instance;
+  final _authService = AuthService();
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
 
@@ -37,10 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _carregando = true);
 
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _senhaController.text,
-      );
+      await _authService.login(_emailController.text, _senhaController.text);
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/main');
@@ -88,6 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 40),
 
+              // ícone
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -114,6 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 32),
 
+              // campo e-mail
               const Text(
                 "E-mail",
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -149,6 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 16),
 
+              // campo senha
               const Text(
                 "Senha",
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -166,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Icons.lock_outline,
                     color: Colors.black.withOpacity(0.4),
                   ),
+                  // botão de mostrar/esconder senha
                   suffixIcon: IconButton(
                     icon: Icon(
                       _senhaVisivel
@@ -207,6 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 18),
 
+              // botão entrar
               SizedBox(
                 width: double.infinity,
                 height: 50,

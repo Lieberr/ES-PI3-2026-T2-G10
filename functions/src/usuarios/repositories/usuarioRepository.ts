@@ -4,8 +4,8 @@ import {Usuario} from "../types/usuario";
 import {db} from "../../shared/firebase";
 
 /**
- *  Salva um usuario ao ser criado
- * @param {Usuario} usuario - Dados do usuario ao salvar.
+ * Salva os dados do usuário no Firestore.
+ * @param {Usuario} usuario - Dados do usuário a salvar.
  * @return {Promise<void>}
  */
 export async function salvarUsuario(usuario: Usuario): Promise<void> {
@@ -14,8 +14,8 @@ export async function salvarUsuario(usuario: Usuario): Promise<void> {
 }
 
 /**
- *  Busca um usuario pelo CPF
- * @param {string} cpf - CPF do usuário no Firestore
+ * Busca usuário pelo CPF para evitar duplicatas.
+ * @param {string} cpf - CPF somente com dígitos.
  * @return {Promise<Usuario | null>} Usuário encontrado ou null.
  */
 export async function buscarUsuarioPorCpf(
@@ -32,8 +32,8 @@ export async function buscarUsuarioPorCpf(
 }
 
 /**
- *  Busca um usuario pelo UID
- * @param {string} uid - UID do usuário no Firebase Auth.
+ * Busca usuário pelo uid do Firebase Auth.
+ * @param {string} uid - UID do Firebase Auth.
  * @return {Promise<Usuario | null>} Usuário encontrado ou null.
  */
 export async function buscarUsuarioPorUid(

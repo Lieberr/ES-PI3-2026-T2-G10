@@ -43,7 +43,7 @@ class _CadastroPageState extends State<CadastroPage> {
         region: 'southamerica-east1',
       ).httpsCallable('cadastrarUsuario');
 
-      await callable.call({
+      final result = await callable.call({
         'nomeCompleto': nomeController.text.trim(),
         'email': emailController.text.trim(),
         'cpf': cpfController.text.trim(),
@@ -51,11 +51,17 @@ class _CadastroPageState extends State<CadastroPage> {
         'senha': senhaController.text,
       });
 
+      // log pra confirmar que funcionou
+      print('CADASTRO OK: ${result.data}');
+
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/main');
       }
     } on FirebaseFunctionsException catch (e) {
-      print('ERRO FUNCTIONS: code=${e.code} | message=${e.message}');
+      // log completo do erro da function
+      print(
+        'ERRO FUNCTIONS: code=${e.code} | message=${e.message} | details=${e.details}',
+      );
 
       String mensagem = 'Erro ao criar conta. Tente novamente.';
       if (e.code == 'already-exists') {
@@ -70,7 +76,9 @@ class _CadastroPageState extends State<CadastroPage> {
         ).showSnackBar(SnackBar(content: Text(mensagem)));
       }
     } catch (e) {
+      // captura qualquer outro erro inesperado
       print('ERRO GENERICO: $e');
+
       if (mounted) {
         ScaffoldMessenger.of(
           context,
