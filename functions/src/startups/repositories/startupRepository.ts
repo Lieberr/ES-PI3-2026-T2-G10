@@ -1,3 +1,5 @@
+// Feito por Leonardo Dionel RA: 25010092
+
 import {Startup} from "../types/startup";
 import {db} from "../../shared/firebase";
 
@@ -22,7 +24,9 @@ export async function buscarStartups(): Promise<Startup[]> {
  * @param {string} id - ID da startup no firestore
  * @return {Promise<Startup[] | null>} Startup encontrada ou null
  */
-export async function buscarStartupsPorId(id: string): Promise<Startup | null> {
+export async function buscarStartupsPorId(
+  id: string
+): Promise<Startup | null> {
   const startupsCollection = db.collection("startups");
   const doc = await startupsCollection.doc(id).get();
   if (!doc.exists) return null;
@@ -49,4 +53,18 @@ export async function buscarStartupPorEstagio(
   })) as Startup[];
 
   return startups;
+}
+
+
+/**
+ *  Busca startups pelo estagio
+ * @param {string} id - id das startups no firebase
+ * @param {number} novoTokensDisponiveis - nova quantidade de tokens disponiveis
+ * @return {Promise<void>}
+ */
+export async function atualizarTokensDisponiveis(
+  id: string, novoTokensDisponiveis: number
+): Promise<void> {
+  await db.collection("startups")
+    .doc(id).update({tokensDisponiveis: novoTokensDisponiveis});
 }

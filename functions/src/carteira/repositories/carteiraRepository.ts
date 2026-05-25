@@ -62,21 +62,23 @@ export async function buscarCarteira(uid: string): Promise<Carteira | null> {
  * @param {string} uid - UID do usuário no Firebase Auth.
  * @return {Promise<TokenUsuario[] | null>}
  */
-export async function buscarTokenUsuario(uid: string): Promise<TokenUsuario[] | null> {
+export async function buscarTokenUsuario(
+  uid: string
+): Promise<TokenUsuario[] | null> {
   const tokensCollection = db
     .collection("carteiras")
     .doc(uid)
     .collection("tokens");
   const snap = await tokensCollection.get();
 
-  if(snap.empty) return null;
+  if (snap.empty) return null;
 
   const tokens: TokenUsuario[] = snap.docs.map((doc) => ({
-    startupId:doc.id,
+    startupId: doc.id,
     ...doc.data(),
-  })) as TokenUsuario[]
+  })) as TokenUsuario[];
 
-  return tokens
+  return tokens;
 }
 
 
@@ -87,19 +89,24 @@ export async function buscarTokenUsuario(uid: string): Promise<TokenUsuario[] | 
  * @param {number} novaQuantidade - Nova quantidade de tokens do usuario
  * @return {Promise<void>}
  */
-export async function atualizarTokenUsuario(uid: string, startupId: string, novaQuantidade: number): Promise<void> {
-  await db.collection("carteiras").doc(uid).collection("tokens").doc(startupId).set(
-    {quantidade: novaQuantidade},
-    {merge: true}
-  );
+export async function atualizarTokenUsuario(
+  uid: string, startupId: string, novaQuantidade: number
+): Promise<void> {
+  await db.collection("carteiras").doc(uid)
+    .collection("tokens").doc(startupId).set(
+      {quantidade: novaQuantidade},
+      {merge: true}
+    );
 }
 
 
 /**
- * Registra a transacao 
+ * Registra a transacao
  * @param {TransacaoPrimaria} transacao - Dados da transação primaria
  * @return {Promise<void>}
  */
-export async function registrarTransacaoPrimaria(transacao: TransacaoPrimaria): Promise<void> {
-  await db.collection("mercadoPrimario").doc().set(transacao)
+export async function registrarTransacaoPrimaria(
+  transacao: TransacaoPrimaria
+): Promise<void> {
+  await db.collection("mercadoPrimario").doc().set(transacao);
 }

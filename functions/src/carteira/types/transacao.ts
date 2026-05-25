@@ -6,8 +6,10 @@ export interface TransacaoPrimaria {
   uid: string;
   startupId: string;
   quantidade: number;
-  data: Timestamp;
+  valorUnitario: number;
+  valorTotal: number,
   tipo: "compra" | "venda";
+  data: Timestamp;
 }
 
 export interface TransacaoSecundaria {
@@ -16,6 +18,7 @@ export interface TransacaoSecundaria {
   startupId: string;
   quantidade: number;
   valorUnitario: number;
+  valorTotal: number;
   data: Timestamp;
   status: "aberta" | "fechada" | "cancelada";
 }
