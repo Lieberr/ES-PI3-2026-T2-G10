@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'widgets/startup_card.dart';
 import 'startup_details_page.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,58 +12,68 @@ class HomePage extends StatefulWidget {
 }
 
  class _HomePageState extends State<HomePage> {
+  
+
+  Future<void> carregarStartups() async {
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.pushReplacementNamed(context, '/login');
+      });
+      return;
+    }
+
+    final callable = functions.httpsCallable('getStartups');
+    final result = await callable();
+    final List data = result.data['startups'] ?? [];
+
+    if (mounted) {
+      setState(() {
+        startups = data.map((e) => Map<String, dynamic>.from(e)).toList();
+        carregando = false;
+      });
+    }
+  } catch (e) {
+    debugPrint(e.toString());
+    if (mounted) {
+      setState(() {
+        carregando = false;
+      });
+    }
+  }
+}
+
+  final FirebaseFunctions functions = FirebaseFunctions.instanceFor(region: 'southamerica-east1');
+
+
+
+  @override
+  void initState() {
+    super.initState();
+    carregarStartups();
+  }
 
   String filtroSelecionado = 'todos';
 
-  final List<Map<String, dynamic>> startups = [
-    {
-      'image': 'https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?q=80&w=400',
-            'title': 'EcoTech Solutions',
-            'status': 'Em operação',
-            'description': 'Plataforma de gestão sustentável para empresas',
-            'tokenValue': 'R\$ 10.50',
-            'capital': 'R\$ 250k',
-            'tokens': '45 000 tokens disponíveis',
-            'progress': 0.58,
-            'variation': '+ 2.5%',
-            'positive': true
-    },
-    {
-       'image': 'https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=400',
-      'title': 'HealthAI',
-      'status': 'Em expansão',
-      'description': 'Inteligência artificial para diagnósticos médicos',
-      'tokenValue': 'R\$ 25.00',
-      'capital': 'R\$ 800k',
-      'tokens': '12 000 tokens disponíveis',
-      'progress': 0.82,
-      'variation': '+ 5.2%',
-      'positive': true
-    },
-    {
-       'image': 'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=400',
-      'title': 'EduTech Brasil',
-      'status': 'Nova',
-      'description': 'Plataforma de educação personalizada com IA',
-      'tokenValue': 'R\$ 8.75',
-      'capital': 'R\$ 180k',
-      'tokens': '35 000 tokens disponíveis',
-      'progress': 0.47,
-      'variation': '- 1.2%',
-      'positive': false
-    },
-  ];
+  List<Map<String, dynamic>> startups = [];
+  bool carregando = true;
 
   List <Map<String, dynamic>> get startupsFiltradas {
     if (filtroSelecionado == 'todos') return startups;
 
     return startups
-          .where((s) => s['status'] == filtroSelecionado)
+          .where((s) => s['estagio'] == filtroSelecionado)
           .toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (carregando) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
     return Container(
       color: const Color(0xFFF3F3F3),
 
@@ -116,11 +128,6 @@ class HomePage extends StatefulWidget {
                       ),
 
                       const PopupMenuItem(
-                        value: 'Nova',
-                        child: Text('Nova (Ideia recentemente publicada)'),
-                      ),
-
-                      const PopupMenuItem(
                         value: 'Em operação',
                         child: Text('Em operação'),
                       ),
@@ -164,16 +171,16 @@ class HomePage extends StatefulWidget {
                         },
 
                         child: StartupCard(
-                          image: s['image'],
-                          title: s['title'],
-                          status: s['status'],
-                          description: s['description'],
-                          tokenValue: s['tokenValue'],
-                          capital: s['capital'],
-                          tokens: s['tokens'],
-                          progress: s['progress'],
-                          variation: s['variation'],
-                          positive: s['positive'],
+                          image: 'https://picsum.photos/300/200',
+                          title: s['nome'],
+                          status: s['estagio'],
+                          description: s['descricao'],
+                          tokenValue: 'R\$ ${_formatarReal(s['valorToken'] ?? 0)}',
+                          capital: 'R\$ ${_formatarReal(s['capitalAportado'] ?? 0)}',
+                          tokens: 'R\$ ${_formatarMilhar(s['tokensDisponiveis'] ?? 0)} tokens disponíveis',
+                          progress: 0.5,
+                          variation: '+0%',
+                          positive: true,
                         ),
                       ),
                     );
@@ -187,6 +194,19 @@ class HomePage extends StatefulWidget {
       ),
     );
   }
+  String _formatarReal(num valor) {
+  final texto = valor.toStringAsFixed(2);
+  final partes = texto.split('.');
+  final inteira = partes[0];
+  final decimal = partes[1];
+  final formatada = inteira.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+  return '$formatada,$decimal';
+}
+
+String _formatarMilhar(num valor) {
+  final texto = valor.toStringAsFixed(0);
+  return texto.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+}
 }
 
 
