@@ -14,7 +14,7 @@ class StartupDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-  final imageUrl = startup['image'] ?? startup['videoDemo'] ?? 'https://picsum.photos/300/200';
+  final imageUrl = startup['videoDemo'] ?? 'https://picsum.photos/300/200';
   final title = startup['title'] ?? startup['nome'] ?? '—';
   final description = startup['description'] ?? startup['descricao'] ?? '';
   final valorTokenNum = startup['valorToken'] ?? startup['tokenValue'] ?? 0;
