@@ -1,5 +1,5 @@
-import { Timestamp } from "firebase-admin/firestore";
-import { TransacaoSecundaria } from "../../carteira/types/transacao"
+import {Timestamp} from "firebase-admin/firestore";
+import {TransacaoSecundaria} from "../../carteira/types/transacao";
 import {db} from "../../shared/firebase";
 
 
@@ -9,7 +9,7 @@ import {db} from "../../shared/firebase";
  * @return {Promise<id>}
  */
 export async function criarOferta(
-    oferta: TransacaoSecundaria
+  oferta: TransacaoSecundaria
 ): Promise<string> {
   const ref = db.collection("mercadoSecundario").doc();
   await ref.set(oferta);
@@ -24,17 +24,17 @@ export async function criarOferta(
  */
 export async function buscarOfertasAbertas(startupId: string)
 : Promise<TransacaoSecundaria[]> {
-    const mercadoSecundarioCollection = db.collection("mercadoSecundario");
-    const snap = await mercadoSecundarioCollection
+  const mercadoSecundarioCollection = db.collection("mercadoSecundario");
+  const snap = await mercadoSecundarioCollection
     .where("status", "==", "aberta")
     .where("startupId", "==", startupId)
     .get();
-    const ofertas: TransacaoSecundaria[] = snap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-    })) as unknown as TransacaoSecundaria[];
-    
-    return ofertas;
+  const ofertas: TransacaoSecundaria[] = snap.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as unknown as TransacaoSecundaria[];
+
+  return ofertas;
 }
 
 /**
@@ -43,23 +43,23 @@ export async function buscarOfertasAbertas(startupId: string)
  * @return {Promise<TransacaoSecundaria[]>} Retorna a oferta
  */
 export async function buscarOfertaPorUid(
-    uid: string
+  uid: string
 ): Promise<TransacaoSecundaria[]> {
-    const mercadoSecundarioCollection = db.collection("mercadoSecundario");
-    const snapVendedor = await mercadoSecundarioCollection
+  const mercadoSecundarioCollection = db.collection("mercadoSecundario");
+  const snapVendedor = await mercadoSecundarioCollection
     .where("uidVendedor", "==", uid).get();
-    const snapComprador = await mercadoSecundarioCollection
+  const snapComprador = await mercadoSecundarioCollection
     .where("uidComprador", "==", uid).get();
 
-    const ofertas = [
-        ...snapVendedor.docs,
-        ...snapComprador.docs,
-    ].map((doc) => ({
-        id: doc.id, 
-        ...doc.data()
-    })) as unknown as TransacaoSecundaria[];
+  const ofertas = [
+    ...snapVendedor.docs,
+    ...snapComprador.docs,
+  ].map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as unknown as TransacaoSecundaria[];
 
-    return ofertas;
+  return ofertas;
 }
 
 
@@ -71,7 +71,7 @@ export async function buscarOfertaPorUid(
  * } Retorna a oferta ou nulo se não encontrar.
  */
 export async function buscarOfertaPorId(
-    id: string
+  id: string
 ): Promise<TransacaoSecundaria | null> {
   const mercadoSecundarioCollection = db.collection("mercadoSecundario");
   const doc = await mercadoSecundarioCollection.doc(id).get();
@@ -86,9 +86,9 @@ export async function buscarOfertaPorId(
  * @return {Promise<void>}
  */
 export async function cancelarOferta(
-    id: string
+  id: string
 ): Promise<void> {
-    await db.collection("mercadoSecundario")
+  await db.collection("mercadoSecundario")
     .doc(id)
     .update({status: "cancelada"});
 }
@@ -97,17 +97,22 @@ export async function cancelarOferta(
 /**
  * Fecha uma oferta ao ser concluida
  * @param {string} id - ID da oferta
+ * @param {string} uidAceitante - ID do usuario que conclui a oferta
+ * @param {string} tipo - Tipo da oferta
  * @return {Promise<void>}
  */
 export async function fecharOferta(
-    id:string,
-    uidAceitante: string,
-    tipo: "compra" | "venda",
+  id:string,
+  uidAceitante: string,
+  tipo: "compra" | "venda",
 ): Promise<void> {
-    
-    const atualizacao = tipo === "compra"
-    ? {status: "fechada", uidVendedor: uidAceitante, resolvidaEm: Timestamp.now()}
-    : {status: "fechada", uidComprador: uidAceitante, resolvidaEm: Timestamp.now()};
+  const atualizacao = tipo === "compra" ?{
+    status: "fechada", uidVendedor: uidAceitante,
+    resolvidaEm: Timestamp.now()} :
+    {
+      status: "fechada", uidComprador: uidAceitante,
+      resolvidaEm: Timestamp.now(),
+    };
 
-    await db.collection("mercadoSecundario").doc(id).update(atualizacao);
+  await db.collection("mercadoSecundario").doc(id).update(atualizacao);
 }
