@@ -1,8 +1,19 @@
-import 'package:flutter/material.dart';
+import 'dart:math';
 
-class RecuperarSenhaPage extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class RecuperarSenhaPage extends StatefulWidget {
   const RecuperarSenhaPage({super.key});
 
+  @override
+  State<RecuperarSenhaPage> createState() => _RecuperarSenhaPageState();
+}
+
+class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
+
+  final TextEditingController emailController = TextEditingController();
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,6 +70,7 @@ class RecuperarSenhaPage extends StatelessWidget {
 
             // Campo de email
             TextField(
+              controller: emailController,
               decoration: InputDecoration(
                 labelText: 'E-mail',
                 labelStyle: TextStyle(
@@ -86,9 +98,7 @@ class RecuperarSenhaPage extends StatelessWidget {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  // ação aqui
-                },
+                onPressed: recuperarSenha,
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
                   backgroundColor: Color.fromRGBO(21, 93, 252, 1),
@@ -106,5 +116,43 @@ class RecuperarSenhaPage extends StatelessWidget {
         ),
       ),
     );
+  }
+  Future<void> recuperarSenha() async {
+    try {
+      final email = emailController.text.trim();
+
+      if(email.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Digite seu email."),
+          )
+        );
+        return;
+      }
+
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: email,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Email de recuperação enviado com sucesso."
+          )
+        )
+      );
+    } on FirebaseAuthException catch (e) {
+      String mensagem = "Erro ao recuperar senha.";
+
+      if(e.code == 'user-not-found') {
+        mensagem = "Nenhum usuario encontrado com esse email.";
+      } else if(e.code == 'invalid-email') {
+        mensagem = "Email inválido";
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensagem)),
+      );
+    }
   }
 }
