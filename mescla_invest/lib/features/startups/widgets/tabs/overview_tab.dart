@@ -1,10 +1,86 @@
 import 'package:flutter/material.dart';
 
 class OverviewTab extends StatelessWidget {
-  const OverviewTab({super.key});
+  final Map<String, dynamic> startup;
+  const OverviewTab({super.key, required this.startup});
 
   @override
   Widget build(BuildContext context) {
+    final descricao = startup['descricao'] ?? startup['description'] ?? 'Descrição não Diponível';
+    final total = (startup['tokensEmitidos'] ?? startup['tokens'] ?? 0) as num;
+    final disponiveis = (startup['tokensDisponiveis'] ?? 0) as num;
+    final percentual = total > 0 ? (disponiveis / total * 100) : 0;
+    final mentores = (startup['mentores'] ?? startup['mentors'] ?? <dynamic>[]) as List;
+
+    Widget sectionCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color.fromARGB(255, 222, 222, 222), width: 1),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0,6))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Tokens', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 18),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Text('Total de Tokens'),
+            Text('${total.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ]),
+          const SizedBox(height: 12),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Text('Tokens Disponíveis'),
+            Text('${disponiveis.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ]),
+          const SizedBox(height: 12),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Text('Percentual Disponível'),
+            Text('${percentual.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  Widget mentorCard() {
+    return Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      border: Border.all(color: const Color.fromARGB(255, 222, 222, 222), width: 1),
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0,6))],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Mentores', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 18),
+        ...mentores.map((m) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Container(width: 52, height: 52, decoration: BoxDecoration(color: Color(0xFFE8F0FE), shape: BoxShape.circle),
+                child: const Icon(Icons.person_outline, color: Color(0xFF2563EB), size: 28),
+              ),
+              const SizedBox(width: 14),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(m.toString(), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                const Text('Mentor', style: TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
+              ]),
+            ],
+          ),
+        )).toList(),
+      ],
+    ),
+);
+}
+
+
     return ListView(
                       padding: const EdgeInsets.all(16),
                       children: [
@@ -19,8 +95,8 @@ class OverviewTab extends StatelessWidget {
 
                         const SizedBox(height: 16),
 
-                        const Text(
-                          'A startup desenvolve soluções tecnológicas inovadoras para transformar o mercado.',
+                        Text(
+                          descricao,
                           style: TextStyle(
                             fontSize: 16,
                             height: 1.6,
@@ -38,173 +114,5 @@ class OverviewTab extends StatelessWidget {
                       ],
                     );
   }
-
-  static Widget sectionCard() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-
-      decoration: BoxDecoration(
-      border: Border.all(
-        color: const Color.fromARGB(255, 222, 222, 222),
-        width: 1
-      ),
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
-
-
-       boxShadow: [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.05),
-      blurRadius: 10,
-      offset: const Offset(0, 6),
-    ),
-  ],
-
-    ),
-
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          Text(
-            'Tokens',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          SizedBox(height: 18),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Total de Tokens'),
-              Text(
-                '100 000',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 12),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Tokens Disponíveis'),
-              Text(
-                '45 000',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 12),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Percentual Disponível'),
-              Text(
-                '45.0%',
-                style: TextStyle(fontWeight: FontWeight.bold)
-              )
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  static Widget mentorCard() {
-  return Container(
-    padding: const EdgeInsets.all(18),
-
-    decoration: BoxDecoration(
-      border: Border.all(
-        color: const Color.fromARGB(255, 222, 222, 222),
-        width: 1
-      ),
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
-
-
-       boxShadow: [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.05),
-      blurRadius: 10,
-      offset: const Offset(0, 6),
-    ),
-  ],
-
-    ),
-
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-
-        const Text(
-          'Mentores',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-
-        const SizedBox(height: 18),
-
-        Row(
-          children: [
-
-            Container(
-              width: 52,
-              height: 52,
-
-              decoration: BoxDecoration(
-                color: Color(0xFFE8F0FE),
-                shape: BoxShape.circle,
-              ),
-
-              child: const Icon(
-                Icons.person_outline,
-                color: Color(0xFF2563EB),
-                size: 28,
-              ),
-            ),
-
-            const SizedBox(width: 14),
-
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-
-                Text(
-                  'Prof. Dr. João Silva',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                SizedBox(height: 4),
-
-                Text(
-                  'Mentor',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-  
 }
 

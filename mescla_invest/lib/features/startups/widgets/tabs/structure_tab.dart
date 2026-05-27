@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class StructureTab extends StatelessWidget {
-  const StructureTab({super.key});
+  final Map<String, dynamic> startup;
+  const StructureTab({super.key, required this.startup});
 
   @override
   Widget build(BuildContext context) {

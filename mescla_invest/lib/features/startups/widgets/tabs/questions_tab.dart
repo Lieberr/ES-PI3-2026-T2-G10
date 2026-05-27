@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class QuestionsTab extends StatelessWidget {
-  const QuestionsTab({super.key});
+  final Map<String, dynamic> startup;
+  const QuestionsTab({super.key, required this.startup});
 
   @override
   Widget build(BuildContext context) {

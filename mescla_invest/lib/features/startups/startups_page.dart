@@ -12,6 +12,7 @@ class HomePage extends StatefulWidget {
 }
 
  class _HomePageState extends State<HomePage> {
+  
 
   Future<void> carregarStartups() async {
   try {
