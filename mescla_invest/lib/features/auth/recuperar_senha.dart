@@ -13,7 +13,8 @@ class RecuperarSenhaPage extends StatefulWidget {
 class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
 
   final TextEditingController emailController = TextEditingController();
-  
+  bool carregando = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,7 +99,7 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: recuperarSenha,
+                onPressed: carregando ? null : recuperarSenha,
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
                   backgroundColor: Color.fromRGBO(21, 93, 252, 1),
@@ -106,10 +107,19 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text(
-                  'Enviar instruções',
-                  style: TextStyle(fontSize: 16),
-                ),
+                child: carregando
+                      ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                      : const Text(
+                        'Enviar instruções',
+                        style: TextStyle(fontSize: 16),
+                      )
               ),
             ),
           ],
@@ -129,6 +139,10 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
         );
         return;
       }
+
+      setState(() {
+        carregando = true;
+      });
 
       await FirebaseAuth.instance.sendPasswordResetEmail(
         email: email,
@@ -153,6 +167,10 @@ class _RecuperarSenhaPageState extends State<RecuperarSenhaPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(mensagem)),
       );
+    } finally {
+      setState(() {
+        carregando = false;
+      });
     }
   }
 }
