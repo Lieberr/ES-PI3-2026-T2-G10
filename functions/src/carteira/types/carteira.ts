@@ -7,3 +7,14 @@ export interface Carteira {
   saldo: number;
   criadoEm: Timestamp;
 }
+
+export interface Operacao {
+  uid: string;
+  tipo: "deposito" | "saque";
+  valor: number;
+  realizadoEm: Timestamp;
+}
+
+export interface AtualizarSaldoInput {
+  valor: number;
+}

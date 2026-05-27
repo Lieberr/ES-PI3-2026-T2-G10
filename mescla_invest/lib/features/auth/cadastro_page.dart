@@ -1,5 +1,3 @@
-// Feito por Leonardo Dionel RA: 25010092
-
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
