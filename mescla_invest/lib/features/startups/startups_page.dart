@@ -175,9 +175,9 @@ class HomePage extends StatefulWidget {
                           title: s['nome'],
                           status: s['estagio'],
                           description: s['descricao'],
-                          tokenValue: 'R\$ ${s['valorToken']}',
-                          capital: 'R\$ ${s['capitalAportado']}',
-                          tokens: '${s['tokensDisponiveis']} tokens disponíveis',
+                          tokenValue: 'R\$ ${_formatarReal(s['valorToken'] ?? 0)}',
+                          capital: 'R\$ ${_formatarReal(s['capitalAportado'] ?? 0)}',
+                          tokens: 'R\$ ${_formatarMilhar(s['tokensDisponiveis'] ?? 0)} tokens disponíveis',
                           progress: 0.5,
                           variation: '+0%',
                           positive: true,
@@ -194,6 +194,19 @@ class HomePage extends StatefulWidget {
       ),
     );
   }
+  String _formatarReal(num valor) {
+  final texto = valor.toStringAsFixed(2);
+  final partes = texto.split('.');
+  final inteira = partes[0];
+  final decimal = partes[1];
+  final formatada = inteira.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+  return '$formatada,$decimal';
+}
+
+String _formatarMilhar(num valor) {
+  final texto = valor.toStringAsFixed(0);
+  return texto.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+}
 }
 
 

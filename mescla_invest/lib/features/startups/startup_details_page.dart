@@ -18,9 +18,9 @@ class StartupDetailsPage extends StatelessWidget {
   final title = startup['title'] ?? startup['nome'] ?? '—';
   final description = startup['description'] ?? startup['descricao'] ?? '';
   final valorTokenNum = startup['valorToken'] ?? startup['tokenValue'] ?? 0;
-  final tokenValue = 'R\$ ${(valorTokenNum as num).toStringAsFixed(2)}';
+  final tokenValue = 'R\$ ${_formatarReal(valorTokenNum)}';
   final capitalNum = startup['capitalAportado'] ?? startup['capital'] ?? 0;
-  final capital = 'R\$ ${(capitalNum as num).toStringAsFixed(2)}';
+  final capital = 'R\$ ${_formatarReal(capitalNum)}';
 
     return DefaultTabController(
       length: 3,
@@ -207,8 +207,20 @@ class StartupDetailsPage extends StatelessWidget {
       ),
     );
   }
+  String _formatarReal(num valor) {
+    final texto = valor.toStringAsFixed(2);
+    final partes = texto.split('.');
+    final inteira = partes[0];
+    final decimal = partes[1];
+    final formatada = inteira.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+    return '$formatada,$decimal';
+  }
 
-  
+  String _formatarMilhar(num valor) {
+    final texto = valor.toStringAsFixed(2);
+    return texto.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+
+  }
 
 }
 

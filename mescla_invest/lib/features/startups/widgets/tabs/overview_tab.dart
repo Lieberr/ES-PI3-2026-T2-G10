@@ -28,12 +28,12 @@ class OverviewTab extends StatelessWidget {
           const SizedBox(height: 18),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             const Text('Total de Tokens'),
-            Text('${total.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('${_formatarMilhar(total)}', style: const TextStyle(fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 12),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             const Text('Tokens Disponíveis'),
-            Text('${disponiveis.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('${_formatarMilhar(disponiveis)}', style: const TextStyle(fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 12),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -113,6 +113,20 @@ class OverviewTab extends StatelessWidget {
                         mentorCard(),
                       ],
                     );
+  }
+    String _formatarReal(num valor) {
+    final texto = valor.toStringAsFixed(2);
+    final partes = texto.split('.');
+    final inteira = partes[0];
+    final decimal = partes[1];
+    final formatada = inteira.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+    return '$formatada,$decimal';
+  }
+
+  String _formatarMilhar(num valor) {
+    final texto = valor.toStringAsFixed(2);
+    return texto.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+
   }
 }
 
