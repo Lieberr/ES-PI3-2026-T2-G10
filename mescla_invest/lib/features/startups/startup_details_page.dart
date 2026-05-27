@@ -6,10 +6,7 @@ import 'widgets/tabs/questions_tab.dart';
 class StartupDetailsPage extends StatelessWidget {
   final Map<String, dynamic> startup;
 
-  const StartupDetailsPage({
-    super.key,
-    required this.startup,
-  });
+  const StartupDetailsPage({super.key, required this.startup});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +19,6 @@ class StartupDetailsPage extends StatelessWidget {
         body: SafeArea(
           child: Column(
             children: [
-
               // HEADER
               Container(
                 height: 240,
@@ -52,16 +48,12 @@ class StartupDetailsPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       IconButton(
                         onPressed: () {
                           Navigator.pop(context);
                         },
 
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                        ),
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
                       ),
 
                       const Spacer(),
@@ -95,7 +87,6 @@ class StartupDetailsPage extends StatelessWidget {
 
                 child: Row(
                   children: [
-
                     Expanded(
                       child: infoCard(
                         Icons.account_balance_wallet_outlined,
@@ -132,14 +123,14 @@ class StartupDetailsPage extends StatelessWidget {
 
               // CONTEÚDO
               Expanded(
-                child: TabBarView(children: [
-                  const OverviewTab(),
-                  const StructureTab(),
-                  const QuestionsTab(),
-                ])
-              )
-
-
+                child: TabBarView(
+                  children: [
+                    const OverviewTab(),
+                    const StructureTab(),
+                    QuestionsTab(startupId: startup['id']),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -158,30 +149,18 @@ class StartupDetailsPage extends StatelessWidget {
         ),
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-
-       
       ),
 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: const Color(0xff2563eb)),
+              const SizedBox(width: 6),
 
-          Row(children: [
-            Icon(
-              icon,
-              size: 18,
-              color: const Color(0xff2563eb),
-            ),
-            const SizedBox(width: 6),
-
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.black,
-              ),
-            )
-          ],
-          
+              Text(title, style: const TextStyle(color: Colors.black)),
+            ],
           ),
 
           const SizedBox(height: 8),
@@ -198,8 +177,4 @@ class StartupDetailsPage extends StatelessWidget {
       ),
     );
   }
-
-  
-
 }
-
