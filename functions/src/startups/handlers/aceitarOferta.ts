@@ -93,7 +93,7 @@ export const aceitarOferta = onCall(
           quantidade:
           (tokenAtualComprador?.quantidade ?? 0) + oferta.quantidade,
         }, {merge: true});
-        
+
         transaction.update(ofertaRef, {
           uidVendedor: uid,
           status: "fechada",
