@@ -66,27 +66,25 @@ class _BalcaoPageState extends State<BalcaoPage> {
   }
 
     // Funcao para ordenar 
-      void sortStartups() {
+    void sortStartups() {
       startups.sort((a, b) {
-        if (sortMode == "price") {
-          final priceA = a["valorToken"] as double;
-          final priceB = b["valorToken"] as double;
-
-          return orderAsc
-              ? priceA.compareTo(priceB)
-              : priceB.compareTo(priceA);
+        if(sortMode == "price") {
+          final priceA = (a['valorToken'] ?? 0) as num;
+          final priceB = (b['valorToken'] ?? 0) as num;
+          return orderAsc ? priceA.compareTo(priceB) : priceB.compareTo(priceA);
         }
 
-        if (sortMode == "high") {
-          return parseVariacao(b["variacao"])
-              .compareTo(parseVariacao(a["variacao"]));
+        if(sortMode == "high") {
+          final va = parseVariacao((a['variacao'] as String?) ?? '+0%');
+          final vb = parseVariacao((b['variacao'] as String?) ?? '+0%');
+          return vb.compareTo(va);
         }
-
-        if (sortMode == "low") {
-          return parseVariacao(a["variacao"])
-              .compareTo(parseVariacao(b["variacao"]));
+        
+        if(sortMode == 'low') {
+          final va = parseVariacao((a['variacao'] as String?) ?? '+0%');
+          final vb = parseVariacao((b['variacao'] as String?) ?? '+0%');
+          return va.compareTo(vb);
         }
-
         return 0;
       });
     }
@@ -186,11 +184,13 @@ class _BalcaoPageState extends State<BalcaoPage> {
                       ).then((value) {
                         if (value == "price_asc") {
                           setState(() {
+                            sortMode = 'price';
                             orderAsc = true;
                             sortStartups();
                           });
                         } else if (value == "price_desc") {
                           setState(() {
+                            sortMode = 'price';
                             orderAsc = false;
                             sortStartups();
                           });
