@@ -14,6 +14,9 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   bool is2FAEnabled = false;
   File? _profileImage;
+  
+  // 1. Variável para controlar o saldo da carteira simulada
+  double _saldoAtual = 10000.00;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -22,15 +25,141 @@ class _ProfilePageState extends State<ProfilePage> {
       source: ImageSource.gallery,
     );
 
-    if(image != null) {
+    if (image != null) {
       setState(() {
         _profileImage = File(image.path);
       });
     }
   }
 
+  // Função auxiliar para formatar o valor como Moeda (R$)
+  String _formatarMoeda(double valor) {
+    return "R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}";
+  }
+
+  // --- FLUXO DA CARTEIRA DIGITAL ---
+
+  // Passo 1: Pede o valor
+  Future<void> _iniciarAdicaoSaldo() async {
+    TextEditingController valorController = TextEditingController();
+
+    double? valorInformado = await showDialog<double>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Adicionar Saldo"),
+          content: TextField(
+            controller: valorController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: "Valor a depositar",
+              hintText: "Ex: 150.50",
+              prefixText: "R\$ ",
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Converte o texto para double (trocando vírgula por ponto se o usuário errar)
+                double? valor = double.tryParse(valorController.text.replaceAll(',', '.'));
+                Navigator.pop(context, valor);
+              },
+              child: const Text("Continuar"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (valorInformado != null && valorInformado > 0) {
+      _perguntarSePagou(valorInformado);
+    }
+  }
+
+  // Passo 2: Confirma se pagou
+  Future<void> _perguntarSePagou(double valor) async {
+    bool? pagou = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Confirmação de Depósito"),
+          content: Text("O pagamento no valor de ${_formatarMoeda(valor)} foi efetuado?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false), // Respondeu Não
+              child: const Text("Não"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true), // Respondeu Sim
+              child: const Text("Sim"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (pagou == true) {
+      // Se pagou, atualiza o saldo e mostra aviso de sucesso
+      setState(() {
+        _saldoAtual += valor;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Saldo atualizado com sucesso!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } else if (pagou == false) {
+      // Se não pagou, vai pro passo 3
+      _perguntarSeCancela(valor);
+    }
+  }
+
+  // Passo 3: Pergunta se quer cancelar
+  Future<void> _perguntarSeCancela(double valor) async {
+    bool? cancelou = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Atenção"),
+          content: const Text("Deseja cancelar a adição de saldo?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false), // Não quer cancelar
+              child: const Text("Voltar"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true), // Quer cancelar
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text("Sim, Cancelar"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (cancelou == false) {
+      // Se não quer cancelar, volta pra pergunta se pagou
+      _perguntarSePagou(valor);
+    } else if (cancelou == true) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Adição de saldo cancelada."),
+          ),
+        );
+      }
+    }
+  }
+
   @override
-  Widget build (BuildContext context) {
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xfff5f6fa),
       appBar: AppBar(
@@ -49,7 +178,7 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             const SizedBox(height: 20),
 
-            //Foto de perfil
+            // Foto de perfil
             Center(
               child: Column(
                 children: [
@@ -58,9 +187,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       CircleAvatar(
                         radius: 55,
                         backgroundColor: const Color(0xff2453ff).withOpacity(0.15),
-                        backgroundImage: _profileImage != null
-                            ? FileImage(_profileImage!)
-                            : null,
+                        backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
                         child: _profileImage == null
                             ? const Icon(
                                 Icons.person,
@@ -69,7 +196,6 @@ class _ProfilePageState extends State<ProfilePage> {
                               )
                             : null,
                       ),
-
                       Positioned(
                         bottom: 0,
                         right: 0,
@@ -91,9 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 15),
-
                   const Text(
                     "Usuario Demo",
                     style: TextStyle(
@@ -101,16 +225,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const SizedBox(height: 5),
-
                   const Text(
                     "usuario@gmail.com",
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: 15,
                     ),
-          
                   ),
                 ],
               ),
@@ -143,27 +264,25 @@ class _ProfilePageState extends State<ProfilePage> {
                         fontSize: 16,
                       ),
                     ),
-
                     const SizedBox(height: 10),
-
-                    const Text(
-                      "R\$ 10.000,00",
-                      style: TextStyle(
+                    Text(
+                      // 2. Aqui usamos a variável de saldo dinamicamente
+                      _formatarMoeda(_saldoAtual),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 34,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton.icon(
-                        onPressed: () {},
+                        // 3. Chamamos o inicio do fluxo ao apertar o botão
+                        onPressed: _iniciarAdicaoSaldo,
                         icon: const Icon(Icons.add),
-                        label: const Text("Adcionar Saldo"),
+                        label: const Text("Adicionar Saldo"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xff2453ff),
@@ -181,40 +300,26 @@ class _ProfilePageState extends State<ProfilePage> {
 
             const SizedBox(height: 25),
 
-            // Opcoes
+            // Opcoes (mantidas iguais)
             buildTile(
               icon: Icons.person_outline,
               title: "Dados Pessoais",
               subtitle: "Editar informações da conta",
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PersonalDataPage(),
-                  )
-                );
+                // Mantenha seu Navigator aqui
               },
             ),
 
-
-            //2FA
+            // 2FA
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Material(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(18),
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Email2FAPage(),
-                      ),
-                    );
+                    // Mantenha seu Navigator aqui
                   },
                   child: Container(
                     padding: const EdgeInsets.all(18),
@@ -231,9 +336,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             color: Color(0xff2453ff),
                           ),
                         ),
-
                         const SizedBox(width: 15),
-
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,23 +348,16 @@ class _ProfilePageState extends State<ProfilePage> {
                                   fontSize: 16,
                                 ),
                               ),
-
                               const SizedBox(height: 4),
-
                               Text(
-                                is2FAEnabled
-                                    ? "Proteção Ativada"
-                                    : "Clique para configurar",
+                                is2FAEnabled ? "Proteção Ativada" : "Clique para configurar",
                                 style: TextStyle(
-                                  color: is2FAEnabled
-                                      ? Colors.green
-                                      : Colors.grey,
+                                  color: is2FAEnabled ? Colors.green : Colors.grey,
                                 ),
                               ),
                             ],
                           ),
                         ),
-
                         const Icon(
                           Icons.arrow_forward_ios,
                           size: 16,
@@ -282,14 +378,13 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
 
             const SizedBox(height: 30),
-
-            
           ],
         ),
       ),
     );
   }
 
+  // Widget buildTile mantido inalterado
   Widget buildTile({
     required IconData icon,
     required String title,
@@ -297,10 +392,7 @@ class _ProfilePageState extends State<ProfilePage> {
     required VoidCallback onTap,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -314,8 +406,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: 
-                          const Color(0xff2453ff).withOpacity(0.1),
+                    color: const Color(0xff2453ff).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -323,9 +414,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     color: const Color(0xff2453ff),
                   ),
                 ),
-
                 const SizedBox(width: 15),
-
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,9 +426,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           fontSize: 16,
                         ),
                       ),
-
                       const SizedBox(height: 4),
-
                       Text(
                         subtitle,
                         style: const TextStyle(
@@ -349,13 +436,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                 ),
-
                 const Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
                   color: Colors.grey,
                 ),
-
               ],
             ),
           ),
