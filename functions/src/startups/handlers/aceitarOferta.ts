@@ -13,13 +13,19 @@ export const aceitarOferta = onCall(
   async (request: CallableRequest<{ofertaId: string}>) => {
     const uid = request.auth?.uid;
     if (!uid) {
-      throw new HttpsError("unauthenticated", "Usuário não autenticado.");
+      throw new HttpsError(
+        "unauthenticated", 
+        "Usuário não autenticado."
+      );
     }
 
     const {ofertaId} = request.data;
     const oferta = await buscarOfertaPorId(ofertaId);
     if (!oferta) {
-      throw new HttpsError("not-found", "Oferta não encontrada.");
+      throw new HttpsError(
+        "not-found", 
+        "Oferta não encontrada."
+      );
     }
     if (oferta.status !== "aberta") {
       throw new HttpsError(
@@ -27,23 +33,39 @@ export const aceitarOferta = onCall(
         "Oferta não está mais aberta."
       );
     }
+    if (oferta.uidComprador === uid || oferta.uidVendedor === uid) {
+      throw new HttpsError(
+        "permission-denied",
+        "Você não pode aceitar a propria oferta."
+      );
+    }
 
     const tokens = await buscarTokenUsuario(uid) ?? [];
     const carteira = await buscarCarteira(uid);
     if (!carteira) {
-      throw new HttpsError("not-found", "Carteira não encontrada.");
+      throw new HttpsError(
+        "not-found", 
+        "Carteira não encontrada."
+      );
     }
 
     if (oferta.tipo === "compra") {
       oferta.uidVendedor = uid;
       if (!oferta.uidComprador) {
-        throw new HttpsError("internal", "Comprador não identificado.");
+        throw new HttpsError(
+          "internal", 
+          "Comprador não identificado."
+        );
       }
+
       const tokenAtual = tokens.find((t) => t.startupId === oferta.startupId);
       const quantidadeAtual = tokenAtual?.quantidade ?? 0;
 
       if (quantidadeAtual < oferta.quantidade) {
-        throw new HttpsError("invalid-argument", "Tokens insuficientes.");
+        throw new HttpsError(
+          "invalid-argument", 
+          "Tokens insuficientes."
+        );
       }
 
       const novaQuantidade = quantidadeAtual - oferta.quantidade;
@@ -114,7 +136,10 @@ export const aceitarOferta = onCall(
       const quantidadeAtual = tokenAtual?.quantidade ?? 0;
 
       if (carteira.saldo < oferta.valorTotal) {
-        throw new HttpsError("invalid-argument", "Saldo insuficiente.");
+        throw new HttpsError(
+          "invalid-argument", 
+          "Saldo insuficiente."
+        );
       }
 
       const novaQuantidade = quantidadeAtual + oferta.quantidade;

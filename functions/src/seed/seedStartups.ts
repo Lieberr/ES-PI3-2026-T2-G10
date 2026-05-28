@@ -1,4 +1,5 @@
 // Feito por Leonardo Dionel RA: 25010092
+
 import {initializeApp, cert} from "firebase-admin/app";
 import {readFileSync} from "fs";
 

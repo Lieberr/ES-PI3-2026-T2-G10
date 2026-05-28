@@ -6,3 +6,4 @@ export {criarOfertaBalcao} from "./handlers/criarOfertaBalcao";
 export {aceitarOferta} from "./handlers/aceitarOferta";
 export {cancelarOfertaBalcao} from "./handlers/cancelarOfertaBalcao";
 export {getOfertasAbertas} from "./handlers/getOfertasAbertas";
+export {getMinhasOfertas} from "./handlers/getMinhasOfertas";

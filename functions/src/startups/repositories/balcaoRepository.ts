@@ -1,3 +1,5 @@
+// Feito por Leonardo Dionel RA: 25010092
+
 import {Timestamp} from "firebase-admin/firestore";
 import {TransacaoSecundaria} from "../../carteira/types/transacao";
 import {db} from "../../shared/firebase";
