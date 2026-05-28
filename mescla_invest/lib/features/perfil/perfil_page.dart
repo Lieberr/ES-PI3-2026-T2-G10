@@ -3,6 +3,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:mescla_invest/features/perfil/tabs/editarDadosPessoais_page.dart';
 import 'package:mescla_invest/features/perfil/tabs/2FA_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -14,6 +16,8 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   bool is2FAEnabled = false;
   File? _profileImage;
+  String? displayName;
+  String? email;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -27,6 +31,15 @@ class _ProfilePageState extends State<ProfilePage> {
         _profileImage = File(image.path);
       });
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    final user = FirebaseAuth.instance.currentUser;
+    displayName = user?.displayName ?? "Usuario Demo";
+    email = user?.email ?? "usuario@gmail.com";
   }
 
   @override
@@ -94,8 +107,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   const SizedBox(height: 15),
 
-                  const Text(
-                    "Usuario Demo",
+                  Text(
+                    displayName ?? 'Usuario Demo',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -104,8 +117,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   const SizedBox(height: 5),
 
-                  const Text(
-                    "usuario@gmail.com",
+                  Text(
+                    email ?? 'usuario@gmail.com',
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: 15,
