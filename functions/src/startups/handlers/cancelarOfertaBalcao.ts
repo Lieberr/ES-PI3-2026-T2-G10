@@ -7,7 +7,7 @@ import {buscarOfertaPorId} from "../repositories/balcaoRepository";
 import {Timestamp} from "firebase-admin/firestore";
 import {db} from "../../shared/firebase";
 
-export const cancelarOferta = onCall(
+export const cancelarOfertaBalcao = onCall(
   async (request:CallableRequest<{ofertaId: string}>) => {
     const uid = request.auth?.uid;
     if (!uid) {

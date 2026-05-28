@@ -4,3 +4,5 @@ export {getStartups, getStartupById, getStartupPorEstagio}
   from "./handlers/getStartups";
 export {criarOfertaBalcao} from "./handlers/criarOfertaBalcao";
 export {aceitarOferta} from "./handlers/aceitarOferta";
+export {cancelarOfertaBalcao} from "./handlers/cancelarOfertaBalcao";
+export {getOfertasAbertas} from "./handlers/getOfertasAbertas";
