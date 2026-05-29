@@ -50,12 +50,20 @@ export const venderTokenPrimario = onCall(
     }
     const valorUnitario = startup.valorToken;
     const valorTotal = valorUnitario * quantidade;
+
+    // Sobre os Tokens
     const tokenAtual = tokens.find((t) => t.startupId === data.startupId);
     const quantidadeAtual = tokenAtual?.quantidade ?? 0;
+    const valorInvestido = tokenAtual?.valorInvestido ?? 0;
+    const precoMedio = valorInvestido / quantidadeAtual;
+    const novaQuantidade = quantidadeAtual - quantidade;
+    const valorInvestidoVendido = precoMedio * quantidade;
+    const novoValorInvestido = valorInvestido - valorInvestidoVendido;
+
     if (quantidadeAtual < quantidade) {
       throw new HttpsError("invalid-argument", "Tokens insuficiente");
     }
-    const novaQuantidade = quantidadeAtual - quantidade;
+
     await db.runTransaction(async (transaction) => {
       const carteiraRef = db.collection("carteiras").doc(uid);
       const tokenRef = db.collection("carteiras")
@@ -68,7 +76,9 @@ export const venderTokenPrimario = onCall(
         {saldo: carteira.saldo + valorTotal});
       transaction.set(
         tokenRef,
-        {quantidade: novaQuantidade}, {merge: true});
+        {quantidade: novaQuantidade,
+          valorInvestido: novoValorInvestido,
+        }, {merge: true});
       transaction.update(
         startupRef,
         {tokensDisponiveis: startup.tokensDisponiveis + quantidade});

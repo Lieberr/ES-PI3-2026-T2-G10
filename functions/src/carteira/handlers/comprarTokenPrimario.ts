@@ -63,9 +63,13 @@ export const comprarTokenPrimario = onCall(
         "Tokens insuficientes na startup."
       );
     }
+    // Sobre os Tokens
     const tokenAtual = tokens?.find((t) => t.startupId === data.startupId);
     const quantidadeAtual = tokenAtual?.quantidade ?? 0;
     const novaQuantidade = quantidadeAtual + quantidade;
+    const valorInvestido = tokenAtual?.valorInvestido ?? 0;
+    const novoValorInvestido = valorInvestido + valorTotal;
+
     await db.runTransaction(async (transaction) => {
       const carteiraRef = db.collection("carteiras").doc(uid);
       const tokenRef = db.collection("carteiras")
@@ -74,7 +78,11 @@ export const comprarTokenPrimario = onCall(
       const transacaoRef = db.collection("mercadoPrimario").doc();
 
       transaction.update(carteiraRef, {saldo: carteira.saldo - valorTotal});
-      transaction.set(tokenRef, {quantidade: novaQuantidade}, {merge: true});
+      transaction.set(tokenRef, {
+        startupId: startup.id,
+        quantidade: novaQuantidade,
+        valorInvestido: novoValorInvestido,
+      }, {merge: true});
       transaction.update(startupRef,
         {tokensDisponiveis: startup.tokensDisponiveis - quantidade});
       transaction.set(transacaoRef, {

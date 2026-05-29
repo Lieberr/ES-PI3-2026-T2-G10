@@ -29,6 +29,5 @@ export interface TokenUsuario {
   startupId: string;
   quantidade: number;
   quantidadeReservada: number;
-  precoMedio: number;
   valorInvestido: number;
 }

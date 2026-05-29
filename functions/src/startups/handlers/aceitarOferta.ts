@@ -1,11 +1,13 @@
 // Feito por Leonardo Dionel RA: 25010092
 
-import {CallableRequest, HttpsError, onCall} from "firebase-functions/v2/https";
+import {CallableRequest, HttpsError, onCall} from
+  "firebase-functions/v2/https";
 import {
   buscarCarteira,
   buscarTokenUsuario,
 } from "../../carteira/repositories/carteiraRepository";
-import {buscarOfertaPorId} from "../repositories/balcaoRepository";
+import {buscarOfertaPorId}
+  from "../repositories/balcaoRepository";
 import {Timestamp} from "firebase-admin/firestore";
 import {db} from "../../shared/firebase";
 
@@ -20,100 +22,113 @@ export const aceitarOferta = onCall(
     }
 
     const {ofertaId} = request.data;
+
     const oferta = await buscarOfertaPorId(ofertaId);
     if (!oferta) {
       throw new HttpsError(
-        "not-found",
+        "not-found", 
         "Oferta não encontrada."
       );
     }
+
     if (oferta.status !== "aberta") {
       throw new HttpsError(
         "failed-precondition",
         "Oferta não está mais aberta."
       );
     }
+
     if (oferta.uidComprador === uid || oferta.uidVendedor === uid) {
       throw new HttpsError(
         "permission-denied",
-        "Você não pode aceitar a propria oferta."
+        "Você não pode aceitar a própria oferta."
       );
     }
 
-    const tokens = await buscarTokenUsuario(uid) ?? [];
-    const carteira = await buscarCarteira(uid);
-    if (!carteira) {
-      throw new HttpsError(
-        "not-found",
-        "Carteira não encontrada."
-      );
-    }
-
+    // OFERTA DE COMPRA — quem criou quer comprar, uid é o vendedor
     if (oferta.tipo === "compra") {
-      oferta.uidVendedor = uid;
       if (!oferta.uidComprador) {
         throw new HttpsError(
-          "internal",
-          "Comprador não identificado."
+          "not-found", 
+          "Comprador não encontrado."
         );
       }
 
-      const tokenAtual = tokens.find((t) => t.startupId === oferta.startupId);
-      const quantidadeAtual = tokenAtual?.quantidade ?? 0;
+      // Busca dados do vendedor (uid) e do comprador em paralelo
+      const [carteira, tokens, carteiraComprador, tokensComprador] =
+        await Promise.all([
+          buscarCarteira(uid),
+          buscarTokenUsuario(uid),
+          buscarCarteira(oferta.uidComprador),
+          buscarTokenUsuario(oferta.uidComprador),
+        ]);
 
-      if (quantidadeAtual < oferta.quantidade) {
+      if (!carteira) {
+        throw new HttpsError(
+          "not-found", 
+          "Carteira não encontrada."
+        );
+      }
+      if (!carteiraComprador) {
+        throw new HttpsError(
+          "not-found",
+          "Carteira do comprador não encontrada."
+        );
+      }
+
+      const tokenVendedor = tokens?.find(
+        (t) => t.startupId === oferta.startupId
+      );
+      const quantidadeVendedor = tokenVendedor?.quantidade ?? 0;
+
+      if (quantidadeVendedor < oferta.quantidade) {
         throw new HttpsError(
           "invalid-argument",
           "Tokens insuficientes."
         );
       }
 
-      const novaQuantidade = quantidadeAtual - oferta.quantidade;
-      const novoSaldo = carteira.saldo + oferta.valorTotal;
+      // Vendedor: retira proporcionalmente do valor investido
+      const valorInvestidoVendedor = tokenVendedor?.valorInvestido ?? 0;
+      const precoMedioVendedor = valorInvestidoVendedor / quantidadeVendedor;
+      const valorInvestidoVendido = precoMedioVendedor * oferta.quantidade;
 
-      const carteiraComprador = await buscarCarteira(
-        oferta.uidComprador);
-
-      const tokensComprador = await buscarTokenUsuario(
-        oferta.uidComprador) ?? [];
-      const tokenAtualComprador = tokensComprador.find(
+      // Comprador: acumula o valorTotal da oferta como investimento
+      const tokenComprador = tokensComprador?.find(
         (t) => t.startupId === oferta.startupId
       );
 
       await db.runTransaction(async (transaction) => {
-        if (!oferta.uidComprador) {
-          throw new HttpsError(
-            "internal",
-            "Comprador não identificado."
-          );
-        }
         const carteiraRef = db.collection("carteiras").doc(uid);
         const carteiraRefComprador = db.collection("carteiras")
-          .doc(oferta.uidComprador);
-
-        if (!carteiraComprador) {
-          throw new HttpsError(
-            "not-found",
-            "Carteira do comprador não encontrada.",
-          );
-        }
+          .doc(oferta.uidComprador!);
         const tokenRef = db.collection("carteiras")
           .doc(uid).collection("tokens").doc(oferta.startupId);
         const tokenRefComprador = db.collection("carteiras")
-          .doc(oferta.uidComprador).collection("tokens").doc(oferta.startupId);
+          .doc(oferta.uidComprador!).collection("tokens")
+          .doc(oferta.startupId);
         const ofertaRef = db.collection("mercadoSecundario").doc(ofertaId);
 
-        transaction.update(carteiraRef, {saldo: novoSaldo});
+
+        transaction.update(carteiraRef, {
+          saldo: carteira.saldo + oferta.valorTotal,
+        });
+        transaction.set(tokenRef, {
+          quantidade: quantidadeVendedor - oferta.quantidade,
+          valorInvestido: valorInvestidoVendedor - valorInvestidoVendido,
+        }, {merge: true});
 
         transaction.update(carteiraRefComprador, {
-          saldoReservado: carteiraComprador.saldoReservado - oferta.valorTotal,
+          saldoReservado:
+            carteiraComprador.saldoReservado - oferta.valorTotal,
         });
 
-        transaction.set(tokenRef, {quantidade: novaQuantidade}, {merge: true});
-
         transaction.set(tokenRefComprador, {
+          startupId: oferta.startupId,
           quantidade:
-          (tokenAtualComprador?.quantidade ?? 0) + oferta.quantidade,
+            (tokenComprador?.quantidade ?? 0) + oferta.quantidade,
+          valorInvestido:
+            (tokenComprador?.valorInvestido ?? 0) + oferta.valorTotal,
         }, {merge: true});
 
         transaction.update(ofertaRef, {
@@ -124,84 +139,92 @@ export const aceitarOferta = onCall(
       });
     }
 
+  
+    // OFERTA DE VENDA — quem criou quer vender, uid é o comprador
     if (oferta.tipo === "venda") {
-      oferta.uidComprador = uid;
       if (!oferta.uidVendedor) {
-        throw new HttpsError(
-          "unauthenticated",
-          "Usuário não autenticado."
-        );
-      }
-      const tokenAtual = tokens.find((t) => t.startupId === oferta.startupId);
-      const quantidadeAtual = tokenAtual?.quantidade ?? 0;
-
-      if (carteira.saldo < oferta.valorTotal) {
-        throw new HttpsError(
-          "invalid-argument",
-          "Saldo insuficiente."
-        );
+        throw new HttpsError("internal", "Vendedor não identificado.");
       }
 
-      const novaQuantidade = quantidadeAtual + oferta.quantidade;
-      const novoSaldo = carteira.saldo - oferta.valorTotal;
+      const [carteira, tokens, carteiraVendedor, tokensVendedor] =
+        await Promise.all([
+          buscarCarteira(uid),
+          buscarTokenUsuario(uid),
+          buscarCarteira(oferta.uidVendedor),
+          buscarTokenUsuario(oferta.uidVendedor),
+        ]);
 
-      const carteiraVendedor = await buscarCarteira(oferta.uidVendedor);
+      if (!carteira) {
+        throw new HttpsError("not-found", "Carteira não encontrada.");
+      }
       if (!carteiraVendedor) {
         throw new HttpsError(
           "not-found",
           "Carteira do vendedor não encontrada."
         );
       }
-      const tokensVendedor = await buscarTokenUsuario(
-        oferta.uidVendedor) ?? [];
-      const tokenAtualVendedor = tokensVendedor.find(
+
+      if (carteira.saldo < oferta.valorTotal) {
+        throw new HttpsError("invalid-argument", "Saldo insuficiente.");
+      }
+
+      const tokenComprador = tokens?.find(
         (t) => t.startupId === oferta.startupId
       );
 
+      const tokenVendedor = tokensVendedor?.find(
+        (t) => t.startupId === oferta.startupId
+      );
+      const totalTokensVendedor =
+        (tokenVendedor?.quantidade ?? 0) +
+        (tokenVendedor?.quantidadeReservada ?? 0);
+      const valorInvestidoVendedor = tokenVendedor?.valorInvestido ?? 0;
+      const precoMedioVendedor = totalTokensVendedor > 0
+        ? valorInvestidoVendedor / totalTokensVendedor
+        : 0;
+      const valorInvestidoVendido = precoMedioVendedor * oferta.quantidade;
+
       await db.runTransaction(async (transaction) => {
-        if (oferta.tipo === "venda") {
-          oferta.uidComprador = uid;
-          if (!oferta.uidVendedor) {
-            throw new HttpsError(
-              "unauthenticated",
-              "Usuário não autenticado."
-            );
-          }
-          const carteiraRef = db.collection("carteiras").doc(uid);
-          const carteiraRefVendedor = db.collection("carteiras")
-            .doc(oferta.uidVendedor);
-          const tokenRef = db.collection("carteiras")
-            .doc(uid).collection("tokens").doc(oferta.startupId);
-          const tokenRefVendedor = db.collection("carteiras")
-            .doc(oferta.uidVendedor).collection("tokens").doc(oferta.startupId);
-          const ofertaRef = db.collection("mercadoSecundario").doc(ofertaId);
+        const carteiraRef = db.collection("carteiras").doc(uid);
+        const carteiraRefVendedor = db.collection("carteiras")
+          .doc(oferta.uidVendedor!);
+        const tokenRef = db.collection("carteiras")
+          .doc(uid).collection("tokens").doc(oferta.startupId);
+        const tokenRefVendedor = db.collection("carteiras")
+          .doc(oferta.uidVendedor!).collection("tokens")
+          .doc(oferta.startupId);
+        const ofertaRef = db.collection("mercadoSecundario").doc(ofertaId);
 
-          transaction.update(carteiraRef, {
-            saldo: novoSaldo,
-          });
+        transaction.update(carteiraRef, {
+          saldo: carteira.saldo - oferta.valorTotal,
+        });
 
-          transaction.update(carteiraRefVendedor, {
-            saldo: carteiraVendedor.saldo + oferta.valorTotal,
-          });
+        transaction.set(tokenRef, {
+          startupId: oferta.startupId,
+          quantidade:
+            (tokenComprador?.quantidade ?? 0) + oferta.quantidade,
+          valorInvestido:
+            (tokenComprador?.valorInvestido ?? 0) + oferta.valorTotal,
+        }, {merge: true});
 
-          transaction.set(tokenRef, {
-            quantidade: novaQuantidade,
-          }, {merge: true});
+        transaction.update(carteiraRefVendedor, {
+          saldo: carteiraVendedor.saldo + oferta.valorTotal,
+        });
+        
+        transaction.set(tokenRefVendedor, {
+          quantidadeReservada:
+            (tokenVendedor?.quantidadeReservada ?? 0) - oferta.quantidade,
+          valorInvestido: valorInvestidoVendedor - valorInvestidoVendido,
+        }, {merge: true});
 
-          transaction.set(tokenRefVendedor, {
-            quantidadeReservada:
-            (tokenAtualVendedor?.quantidadeReservada ?? 0) - oferta.quantidade,
-          }, {merge: true});
-
-          transaction.update(ofertaRef, {
-            uidComprador: uid,
-            status: "fechada",
-            resolvidaEm: Timestamp.now(),
-          });
-        }
+        transaction.update(ofertaRef, {
+          uidComprador: uid,
+          status: "fechada",
+          resolvidaEm: Timestamp.now(),
+        });
       });
     }
 
-    return {mensagem: "Oferta concluida com sucesso."};
+    return {mensagem: "Oferta concluída com sucesso."};
   }
 );
