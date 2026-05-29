@@ -1,10 +1,11 @@
-<<<<<<< HEAD
-// Feito por gustavo lieb Ra: 24023376
-
-export { listarStartupsHandler } from "./handlers/listarStartups";
-=======
+// Feito por Gustavo Lieb RA: 24023376
 // Feito por Leonardo Dionel RA: 25010092
 
+export { listarStartupsHandler } from "./handlers/listarStartups";
 export {getStartups, getStartupById, getStartupPorEstagio}
   from "./handlers/getStartups";
->>>>>>> main
+export {criarOfertaBalcao} from "./handlers/criarOfertaBalcao";
+export {aceitarOferta} from "./handlers/aceitarOferta";
+export {cancelarOfertaBalcao} from "./handlers/cancelarOfertaBalcao";
+export {getOfertasAbertas} from "./handlers/getOfertasAbertas";
+export {getMinhasOfertas} from "./handlers/getMinhasOfertas";

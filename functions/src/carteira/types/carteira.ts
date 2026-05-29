@@ -5,6 +5,7 @@ import {Timestamp} from "firebase-admin/firestore";
 export interface Carteira {
   uid: string;
   saldo: number;
+  saldoReservado: number;
   criadoEm: Timestamp;
 }
 
