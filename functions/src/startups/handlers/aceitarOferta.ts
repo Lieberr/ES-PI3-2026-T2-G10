@@ -14,7 +14,7 @@ export const aceitarOferta = onCall(
     const uid = request.auth?.uid;
     if (!uid) {
       throw new HttpsError(
-        "unauthenticated", 
+        "unauthenticated",
         "Usuário não autenticado."
       );
     }
@@ -23,7 +23,7 @@ export const aceitarOferta = onCall(
     const oferta = await buscarOfertaPorId(ofertaId);
     if (!oferta) {
       throw new HttpsError(
-        "not-found", 
+        "not-found",
         "Oferta não encontrada."
       );
     }
@@ -44,7 +44,7 @@ export const aceitarOferta = onCall(
     const carteira = await buscarCarteira(uid);
     if (!carteira) {
       throw new HttpsError(
-        "not-found", 
+        "not-found",
         "Carteira não encontrada."
       );
     }
@@ -53,7 +53,7 @@ export const aceitarOferta = onCall(
       oferta.uidVendedor = uid;
       if (!oferta.uidComprador) {
         throw new HttpsError(
-          "internal", 
+          "internal",
           "Comprador não identificado."
         );
       }
@@ -63,7 +63,7 @@ export const aceitarOferta = onCall(
 
       if (quantidadeAtual < oferta.quantidade) {
         throw new HttpsError(
-          "invalid-argument", 
+          "invalid-argument",
           "Tokens insuficientes."
         );
       }
@@ -137,7 +137,7 @@ export const aceitarOferta = onCall(
 
       if (carteira.saldo < oferta.valorTotal) {
         throw new HttpsError(
-          "invalid-argument", 
+          "invalid-argument",
           "Saldo insuficiente."
         );
       }

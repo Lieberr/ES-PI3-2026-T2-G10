@@ -16,8 +16,6 @@ export const getMinhasOfertas = onCall(
       );
     }
 
-    // Firestore não suporta OR entre campos diferentes —
-    // fazemos duas queries e unimos os resultados
     const [comoComprador, comoVendedor] = await Promise.all([
       db.collection("mercadoSecundario")
         .where("uidComprador", "==", uid)
