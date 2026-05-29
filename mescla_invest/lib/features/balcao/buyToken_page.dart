@@ -237,7 +237,7 @@ class _BuyTokenPageState extends State<BuyTokenPage> {
                       ),
 
                       Text(
-                        "R\$ ${precoUnitario.toStringAsFixed(2)}",
+                        "R\$ ${_formatarReal(precoUnitario)}",
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -265,7 +265,7 @@ class _BuyTokenPageState extends State<BuyTokenPage> {
                       ),
 
                       Text(
-                        "R\$ ${total.toStringAsFixed(2)}",
+                        "R\$ ${_formatarReal(total)}",
                         style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
@@ -303,4 +303,14 @@ class _BuyTokenPageState extends State<BuyTokenPage> {
       ),
     );
   }
+
+    String _formatarReal(num valor) {
+    final texto = valor.toStringAsFixed(2);
+    final partes = texto.split('.');
+    final inteira = partes[0];
+    final decimal = partes[1];
+    final formatada = inteira.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+    return '$formatada,$decimal';
+  }
+
 }

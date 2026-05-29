@@ -13,6 +13,15 @@ class StartupDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+  final imageUrl = startup['videoDemo'] ?? 'https://picsum.photos/300/200';
+  final title = startup['title'] ?? startup['nome'] ?? '—';
+  final description = startup['description'] ?? startup['descricao'] ?? '';
+  final valorTokenNum = startup['valorToken'] ?? startup['tokenValue'] ?? 0;
+  final tokenValue = 'R\$ ${_formatarReal(valorTokenNum)}';
+  final capitalNum = startup['capitalAportado'] ?? startup['capital'] ?? 0;
+  final capital = 'R\$ ${_formatarReal(capitalNum)}';
+
     return DefaultTabController(
       length: 3,
 
@@ -30,7 +39,7 @@ class StartupDetailsPage extends StatelessWidget {
 
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: NetworkImage(startup['image']),
+                    image: NetworkImage(imageUrl),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -67,7 +76,7 @@ class StartupDetailsPage extends StatelessWidget {
                       const Spacer(),
 
                       Text(
-                        startup['title'],
+                        title,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 28,
@@ -78,7 +87,7 @@ class StartupDetailsPage extends StatelessWidget {
                       const SizedBox(height: 8),
 
                       Text(
-                        startup['description'],
+                        description,
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 15,
@@ -100,7 +109,7 @@ class StartupDetailsPage extends StatelessWidget {
                       child: infoCard(
                         Icons.account_balance_wallet_outlined,
                         'Valor do Token',
-                        startup['tokenValue'],
+                        tokenValue,
                       ),
                     ),
 
@@ -110,7 +119,7 @@ class StartupDetailsPage extends StatelessWidget {
                       child: infoCard(
                         Icons.groups_2_outlined,
                         'Capital Aportado',
-                        startup['capital'],
+                        capital,
                       ),
                     ),
                   ],
@@ -133,9 +142,9 @@ class StartupDetailsPage extends StatelessWidget {
               // CONTEÚDO
               Expanded(
                 child: TabBarView(children: [
-                  const OverviewTab(),
-                  const StructureTab(),
-                  const QuestionsTab(),
+                   OverviewTab(startup: startup),
+                   StructureTab(startup: startup),
+                   QuestionsTab(startup: startup),
                 ])
               )
 
@@ -198,8 +207,20 @@ class StartupDetailsPage extends StatelessWidget {
       ),
     );
   }
+  String _formatarReal(num valor) {
+    final texto = valor.toStringAsFixed(2);
+    final partes = texto.split('.');
+    final inteira = partes[0];
+    final decimal = partes[1];
+    final formatada = inteira.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+    return '$formatada,$decimal';
+  }
 
-  
+  String _formatarMilhar(num valor) {
+    final texto = valor.toStringAsFixed(2);
+    return texto.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+
+  }
 
 }
 

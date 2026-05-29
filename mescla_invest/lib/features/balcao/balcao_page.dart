@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mescla_invest/features/balcao/sellToken_page.dart';
 import 'buyToken_page.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class BalcaoPage extends StatefulWidget {
   const BalcaoPage({super.key});
@@ -17,70 +19,72 @@ class _BalcaoPageState extends State<BalcaoPage> {
   String sortMode = 'price';
 
 
-  final List<Map<String, dynamic>> startups = [
-    {
-      "nome": "HealthAI",
-      "tokens": "12 000 tokens disponíveis",
-      "preco": 25.00,
-      "variacao": "+5.20%",
-      "imagem":
-          "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
-    },
-    {
-      "nome": "AgriSmart",
-      "tokens": "20 000 tokens disponíveis",
-      "preco": 15.30,
-      "variacao": "+3.80%",
-      "imagem":
-          "https://images.unsplash.com/photo-1501004318641-b39e6451bec6",
-    },
-    {
-      "nome": "EcoTech Solutions",
-      "tokens": "45 000 tokens disponíveis",
-      "preco": 10.50,
-      "variacao": "+2.50%",
-      "imagem":
-          "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
-    },
-    {
-      "nome": "FinFlow",
-      "tokens": "90 000 tokens disponíveis",
-      "preco": 5.00,
-      "variacao": "+0.50%",
-      "imagem":
-          "https://images.unsplash.com/photo-1556740749-887f6717d7e4",
-    },
-  ];
+  final FirebaseFunctions functions = 
+        FirebaseFunctions.instanceFor(region: 'southamerica-east1');
+  
+  List<Map<String, dynamic>> startups = [];
+  bool carregando = true;
+
+  Future<void> carregarStartups() async {
+    try{
+      final user = FirebaseAuth.instance.currentUser;
+      if(user == null) {
+        if(mounted) {
+          Navigator.pushReplacementNamed(context, '/login');
+        }
+        return;
+      }
+
+      final callable = functions.httpsCallable('getStartups');
+      final result = await callable();
+      final List data = result.data['startups'] ?? [];
+
+      if(mounted) {
+        setState(() {
+          startups = 
+            data.map((e) => Map<String, dynamic>.from(e)).toList();
+            sortStartups();
+            carregando = false;
+        });
+
+      }
+    } catch(e) {
+      debugPrint('Erro ao carregar startups: $e');
+      if(mounted) {
+        setState(() {
+          carregando = false;
+        });
+      }
+    }
+  }
 
   @override
   void initState() {
     super.initState();
 
-    sortStartups();
+    carregarStartups();
   }
 
     // Funcao para ordenar 
-      void sortStartups() {
+    void sortStartups() {
       startups.sort((a, b) {
-        if (sortMode == "price") {
-          final priceA = a["preco"] as double;
-          final priceB = b["preco"] as double;
-
-          return orderAsc
-              ? priceA.compareTo(priceB)
-              : priceB.compareTo(priceA);
+        if(sortMode == "price") {
+          final priceA = (a['valorToken'] ?? 0) as num;
+          final priceB = (b['valorToken'] ?? 0) as num;
+          return orderAsc ? priceA.compareTo(priceB) : priceB.compareTo(priceA);
         }
 
-        if (sortMode == "high") {
-          return parseVariacao(b["variacao"])
-              .compareTo(parseVariacao(a["variacao"]));
+        if(sortMode == "high") {
+          final va = parseVariacao((a['variacao'] as String?) ?? '+0%');
+          final vb = parseVariacao((b['variacao'] as String?) ?? '+0%');
+          return vb.compareTo(va);
         }
-
-        if (sortMode == "low") {
-          return parseVariacao(a["variacao"])
-              .compareTo(parseVariacao(b["variacao"]));
+        
+        if(sortMode == 'low') {
+          final va = parseVariacao((a['variacao'] as String?) ?? '+0%');
+          final vb = parseVariacao((b['variacao'] as String?) ?? '+0%');
+          return va.compareTo(vb);
         }
-
         return 0;
       });
     }
@@ -94,7 +98,11 @@ class _BalcaoPageState extends State<BalcaoPage> {
 
   @override
   Widget build(BuildContext context) {
-
+    if(carregando) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
     final filteredStartups = startups.where((startup) {
       final nome = startup["nome"].toString().toLowerCase();
       return nome.contains(search.toLowerCase());
@@ -176,11 +184,13 @@ class _BalcaoPageState extends State<BalcaoPage> {
                       ).then((value) {
                         if (value == "price_asc") {
                           setState(() {
+                            sortMode = 'price';
                             orderAsc = true;
                             sortStartups();
                           });
                         } else if (value == "price_desc") {
                           setState(() {
+                            sortMode = 'price';
                             orderAsc = false;
                             sortStartups();
                           });
@@ -265,7 +275,7 @@ class _BalcaoPageState extends State<BalcaoPage> {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(14),
                                   child: Image.network(
-                                    startup["imagem"] as String,
+                                    (startup["imagem"] as String?) ?? 'https://picsum.photos/300/200',
                                     width: 62,
                                     height: 62,
                                     fit: BoxFit.cover,
@@ -287,7 +297,7 @@ class _BalcaoPageState extends State<BalcaoPage> {
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
-                                        startup["tokens"] as String,
+                                        '${_formatarMilhar(startup['tokensDisponiveis'] ?? 0)} tokens disponíveis',
                                         style: TextStyle(
                                           color: Colors.grey.shade600,
                                           fontSize: 13,
@@ -302,8 +312,7 @@ class _BalcaoPageState extends State<BalcaoPage> {
                                       CrossAxisAlignment.end,
                                   children: [
                                     Text(
-                                      "R\$ ${(startup["preco"] as double).toStringAsFixed(2)}",
-                                      style: const TextStyle(
+                                        "R\$ ${_formatarReal(startup['valorToken'] ?? 0)}",                                      style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 22,
                                       ),
@@ -321,7 +330,7 @@ class _BalcaoPageState extends State<BalcaoPage> {
                                             BorderRadius.circular(30),
                                       ),
                                       child: Text(
-                                        startup["variacao"] as String,
+                                        (startup['variacao'] as String?) ?? '+0%',
                                         style: TextStyle(
                                           color: Colors.green.shade700,
                                           fontWeight: FontWeight.w600,
@@ -349,11 +358,12 @@ class _BalcaoPageState extends State<BalcaoPage> {
                                               BuyTokenPage(
                                             nome: startup["nome"] as String,
                                             preco:
-                                                "R\$ ${(startup["preco"] as double).toStringAsFixed(2)}",
+                                                "R\$ ${_formatarReal(startup['valorToken'] ?? 0)}",
                                             imagem:
-                                                startup["imagem"] as String,
+                                                (startup["imagem"] as String?) ?? 'https://picsum.photos/300/200',
+
                                             disponiveis:
-                                                startup["tokens"] as String,
+                                                '${_formatarMilhar(startup['tokensDisponiveis'] ?? 0)} tokens disponíveis',
                                           ),
                                         ),
                                       );
@@ -386,11 +396,11 @@ class _BalcaoPageState extends State<BalcaoPage> {
                                               SellTokenPage(
                                             nome: startup["nome"] as String,
                                             preco:
-                                                "R\$ ${(startup["preco"] as double).toStringAsFixed(2)}",
+                                                 "R\$ ${_formatarReal(startup['valorToken'] ?? 0)}",
                                             imagem:
-                                                startup["imagem"] as String,
+                                                  (startup["imagem"] as String?) ?? 'https://picsum.photos/300/200',
                                             disponiveis:
-                                                startup["tokens"] as String,
+                                                  '${_formatarMilhar(startup['tokensDisponiveis'] ?? 0)} tokens disponíveis',
                                           ),
                                         ),
                                       );
@@ -430,4 +440,18 @@ class _BalcaoPageState extends State<BalcaoPage> {
       ),
     );
   }
+  String _formatarReal(num valor) {
+  final texto = valor.toStringAsFixed(2);
+  final partes = texto.split('.');
+  final inteira = partes[0];
+  final decimal = partes[1];
+  final formatada = inteira.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+  return '$formatada,$decimal';
+}
+
+String _formatarMilhar(num valor) {
+  final texto = valor.toStringAsFixed(0);
+  return texto.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+}
+
 }
