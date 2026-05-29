@@ -4,3 +4,4 @@ export {depositar} from "./handlers/depositar";
 export {sacar} from "./handlers/sacar";
 export {comprarTokenPrimario} from "./handlers/comprarTokenPrimario";
 export {venderTokenPrimario} from "./handlers/venderTokenPrimario";
+export {getPortfolio} from "./handlers/getPortfolio";
