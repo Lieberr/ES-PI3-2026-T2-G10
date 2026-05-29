@@ -26,7 +26,7 @@ export const aceitarOferta = onCall(
     const oferta = await buscarOfertaPorId(ofertaId);
     if (!oferta) {
       throw new HttpsError(
-        "not-found", 
+        "not-found",
         "Oferta não encontrada."
       );
     }
@@ -49,23 +49,23 @@ export const aceitarOferta = onCall(
     if (oferta.tipo === "compra") {
       if (!oferta.uidComprador) {
         throw new HttpsError(
-          "not-found", 
+          "not-found",
           "Comprador não encontrado."
         );
       }
+      const uidComprador = oferta.uidComprador;
 
-      // Busca dados do vendedor (uid) e do comprador em paralelo
       const [carteira, tokens, carteiraComprador, tokensComprador] =
         await Promise.all([
           buscarCarteira(uid),
           buscarTokenUsuario(uid),
-          buscarCarteira(oferta.uidComprador),
-          buscarTokenUsuario(oferta.uidComprador),
+          buscarCarteira(uidComprador),
+          buscarTokenUsuario(uidComprador),
         ]);
 
       if (!carteira) {
         throw new HttpsError(
-          "not-found", 
+          "not-found",
           "Carteira não encontrada."
         );
       }
@@ -88,12 +88,10 @@ export const aceitarOferta = onCall(
         );
       }
 
-      // Vendedor: retira proporcionalmente do valor investido
       const valorInvestidoVendedor = tokenVendedor?.valorInvestido ?? 0;
       const precoMedioVendedor = valorInvestidoVendedor / quantidadeVendedor;
       const valorInvestidoVendido = precoMedioVendedor * oferta.quantidade;
 
-      // Comprador: acumula o valorTotal da oferta como investimento
       const tokenComprador = tokensComprador?.find(
         (t) => t.startupId === oferta.startupId
       );
@@ -101,11 +99,11 @@ export const aceitarOferta = onCall(
       await db.runTransaction(async (transaction) => {
         const carteiraRef = db.collection("carteiras").doc(uid);
         const carteiraRefComprador = db.collection("carteiras")
-          .doc(oferta.uidComprador!);
+          .doc(uidComprador);
         const tokenRef = db.collection("carteiras")
           .doc(uid).collection("tokens").doc(oferta.startupId);
         const tokenRefComprador = db.collection("carteiras")
-          .doc(oferta.uidComprador!).collection("tokens")
+          .doc(uidComprador).collection("tokens")
           .doc(oferta.startupId);
         const ofertaRef = db.collection("mercadoSecundario").doc(ofertaId);
 
@@ -139,19 +137,20 @@ export const aceitarOferta = onCall(
       });
     }
 
-  
+
     // OFERTA DE VENDA — quem criou quer vender, uid é o comprador
     if (oferta.tipo === "venda") {
       if (!oferta.uidVendedor) {
         throw new HttpsError("internal", "Vendedor não identificado.");
       }
+      const uidVendedor = oferta.uidVendedor;
 
       const [carteira, tokens, carteiraVendedor, tokensVendedor] =
         await Promise.all([
           buscarCarteira(uid),
           buscarTokenUsuario(uid),
-          buscarCarteira(oferta.uidVendedor),
-          buscarTokenUsuario(oferta.uidVendedor),
+          buscarCarteira(uidVendedor),
+          buscarTokenUsuario(uidVendedor),
         ]);
 
       if (!carteira) {
@@ -179,19 +178,19 @@ export const aceitarOferta = onCall(
         (tokenVendedor?.quantidade ?? 0) +
         (tokenVendedor?.quantidadeReservada ?? 0);
       const valorInvestidoVendedor = tokenVendedor?.valorInvestido ?? 0;
-      const precoMedioVendedor = totalTokensVendedor > 0
-        ? valorInvestidoVendedor / totalTokensVendedor
-        : 0;
+      const precoMedioVendedor = totalTokensVendedor > 0 ?
+        valorInvestidoVendedor / totalTokensVendedor :
+        0;
       const valorInvestidoVendido = precoMedioVendedor * oferta.quantidade;
 
       await db.runTransaction(async (transaction) => {
         const carteiraRef = db.collection("carteiras").doc(uid);
         const carteiraRefVendedor = db.collection("carteiras")
-          .doc(oferta.uidVendedor!);
+          .doc(uidVendedor);
         const tokenRef = db.collection("carteiras")
           .doc(uid).collection("tokens").doc(oferta.startupId);
         const tokenRefVendedor = db.collection("carteiras")
-          .doc(oferta.uidVendedor!).collection("tokens")
+          .doc(uidVendedor).collection("tokens")
           .doc(oferta.startupId);
         const ofertaRef = db.collection("mercadoSecundario").doc(ofertaId);
 
@@ -210,7 +209,7 @@ export const aceitarOferta = onCall(
         transaction.update(carteiraRefVendedor, {
           saldo: carteiraVendedor.saldo + oferta.valorTotal,
         });
-        
+
         transaction.set(tokenRefVendedor, {
           quantidadeReservada:
             (tokenVendedor?.quantidadeReservada ?? 0) - oferta.quantidade,

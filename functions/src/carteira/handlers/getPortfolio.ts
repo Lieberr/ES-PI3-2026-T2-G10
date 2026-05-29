@@ -40,16 +40,16 @@ export const getPortfolio = onCall(
       const startup = startups[index];
       if (!startup) return null;
 
-      const precoMedio = token.quantidade > 0
-        ? token.valorInvestido / token.quantidade
-        : 0;
+      const precoMedio = token.quantidade > 0 ?
+        token.valorInvestido / token.quantidade :
+        0;
 
       const valorAtual = startup.valorToken * token.quantidade;
 
-      const variacao = token.valorInvestido > 0
-        ? ((valorAtual - token.valorInvestido) /
-            token.valorInvestido) * 100
-        : 0;
+      const variacao = token.valorInvestido > 0 ?
+        ((valorAtual - token.valorInvestido) /
+            token.valorInvestido) * 100 :
+        0;
 
       return {
         startupId: token.startupId,
@@ -66,14 +66,14 @@ export const getPortfolio = onCall(
 
     // Resumo geral somando todos os itens
     const totalInvestido = itens.reduce(
-      (acc, item) => acc + item!.valorInvestido, 0
+      (acc, item) => acc + (item?.valorInvestido ?? 0), 0
     );
     const totalAtual = itens.reduce(
-      (acc, item) => acc + item!.valorAtual, 0
+      (acc, item) => acc + (item?.valorAtual ?? 0), 0
     );
-    const variacaoGeral = totalInvestido > 0
-      ? ((totalAtual - totalInvestido) / totalInvestido) * 100
-      : 0;
+    const variacaoGeral = totalInvestido > 0 ?
+      ((totalAtual - totalInvestido) / totalInvestido) * 100 :
+      0;
 
     return {
       resumo: {
