@@ -2,12 +2,60 @@
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
 
   @override
   State<CadastroPage> createState() => _CadastroPageState();
+}
+
+class CpfInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 11) digits = digits.substring(0, 11);
+
+    String formatted = '';
+    for (int i = 0; i < digits.length; i++) {
+      if (i == 3 || i == 6) formatted += '.';
+      if (i == 9) formatted += '-';
+      formatted += digits[i];
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
+class TelefoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 11) digits = digits.substring(0, 11);
+
+    String formatted = '';
+    for (int i = 0; i < digits.length; i++) {
+      if (i == 0) formatted += '(';
+      if (i == 2) formatted += ') ';
+      if (i == 7) formatted += '-';
+      formatted += digits[i];
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
 }
 
 class _CadastroPageState extends State<CadastroPage> {
@@ -91,11 +139,12 @@ class _CadastroPageState extends State<CadastroPage> {
     }
   }
 
-  String? validarEmail(String? value) {
-    if (value == null || value.isEmpty) return "Informe o e-mail";
-    if (!value.contains("@")) return "E-mail inválido";
-    return null;
-  }
+String? validarEmail(String? value) {
+  if (value == null || value.isEmpty) return "Informe o e-mail";
+  final regex = RegExp(r'^[\w.-]+@[\w.-]+\.\w{2,}$');
+  if (!regex.hasMatch(value)) return "E-mail inválido";
+  return null;
+}
 
   String? validarCPF(String? value) {
     if (value == null || value.isEmpty) return "Informe o CPF";
@@ -109,11 +158,14 @@ class _CadastroPageState extends State<CadastroPage> {
     return null;
   }
 
-  String? validarSenha(String? value) {
-    if (value == null || value.isEmpty) return "Informe a senha";
-    if (value.length < 6) return "Mínimo 6 caracteres";
-    return null;
-  }
+String? validarSenha(String? value) {
+  if (value == null || value.isEmpty) return "Informe a senha";
+  if (value.length < 8) return "Mínimo 8 caracteres";
+  if (!value.contains(RegExp(r'[A-Z]'))) return "Use ao menos uma letra maiúscula";
+  if (!value.contains(RegExp(r'[0-9]'))) return "Use ao menos um número";
+  if (!value.contains(RegExp(r'[^A-Za-z0-9]'))) return "Use ao menos um caractere especial";
+  return null;
+}
 
   String? validarConfirmacao(String? value) {
     if (value != senhaController.text) return "Senhas não coincidem";
@@ -128,6 +180,7 @@ class _CadastroPageState extends State<CadastroPage> {
     bool isPassword = false,
     bool obscure = false,
     VoidCallback? toggle,
+    List<TextInputFormatter> inputFormatters = const [],
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
@@ -135,6 +188,7 @@ class _CadastroPageState extends State<CadastroPage> {
         controller: controller,
         validator: validator,
         obscureText: obscure,
+        inputFormatters: inputFormatters,
         style: TextStyle(color: Colors.black.withOpacity(1)),
         decoration: InputDecoration(
           labelText: label,
@@ -229,6 +283,7 @@ class _CadastroPageState extends State<CadastroPage> {
                 icon: Icons.badge,
                 controller: cpfController,
                 validator: validarCPF,
+                inputFormatters: [CpfInputFormatter()]
               ),
 
               const Text(
@@ -241,6 +296,7 @@ class _CadastroPageState extends State<CadastroPage> {
                 icon: Icons.phone,
                 controller: telefoneController,
                 validator: validarTelefone,
+                inputFormatters: [TelefoneInputFormatter()],
               ),
 
               const Text(
