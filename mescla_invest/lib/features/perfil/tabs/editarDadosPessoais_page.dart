@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
 
 class PersonalDataPage extends StatefulWidget {
   const PersonalDataPage({super.key});
@@ -27,6 +28,7 @@ class _PersonalDatePage extends State<PersonalDataPage> {
         
   String _cpfMascarado = '';
   bool _carregando = true;
+  String? _fotoUrl;
 
   @override
   void initState() {
@@ -93,6 +95,7 @@ class _PersonalDatePage extends State<PersonalDataPage> {
         phoneController.text = telFomatado;
         _cpfMascarado = cpfMascarado;
         _carregando = false;
+        _fotoUrl = data['fotoUrl'];
       });
 
     } else {
@@ -153,13 +156,15 @@ class _PersonalDatePage extends State<PersonalDataPage> {
                       children: [
                         CircleAvatar(
                           radius: 50,
-                          backgroundColor: 
-                            const Color(0xff2453ff).withOpacity(0.1),
-                          child: const Icon(
-                            Icons.person,
-                            size: 55,
-                            color: Color(0xff2453ff),
-                          ),
+                            backgroundColor: const Color(0xff2453ff).withOpacity(0.1),
+                            backgroundImage: _fotoUrl != null
+                                ? (_fotoUrl!.startsWith('data:')
+                                    ? MemoryImage(base64Decode(_fotoUrl!.split(',')[1]))
+                                    : NetworkImage(_fotoUrl!) as ImageProvider)
+                                : null,
+                            child: _fotoUrl == null
+                                ? const Icon(Icons.person, size: 55, color: Color(0xff2453ff))
+                                : null,
                         ),
 
               
