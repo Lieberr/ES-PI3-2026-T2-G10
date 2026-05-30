@@ -2,12 +2,36 @@
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
 
   @override
   State<CadastroPage> createState() => _CadastroPageState();
+}
+
+class CpfInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 11) digits = digits.substring(0, 11);
+
+    String formatted = '';
+    for (int i = 0; i < digits.length; i++) {
+      if (i == 3 || i == 6) formatted += '.';
+      if (i == 9) formatted += '-';
+      formatted += digits[i];
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
 }
 
 class _CadastroPageState extends State<CadastroPage> {
@@ -132,6 +156,7 @@ String? validarSenha(String? value) {
     bool isPassword = false,
     bool obscure = false,
     VoidCallback? toggle,
+    List<TextInputFormatter> inputFormatters = const [],
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
@@ -139,6 +164,7 @@ String? validarSenha(String? value) {
         controller: controller,
         validator: validator,
         obscureText: obscure,
+        inputFormatters: inputFormatters,
         style: TextStyle(color: Colors.black.withOpacity(1)),
         decoration: InputDecoration(
           labelText: label,
@@ -233,6 +259,7 @@ String? validarSenha(String? value) {
                 icon: Icons.badge,
                 controller: cpfController,
                 validator: validarCPF,
+                inputFormatters: [CpfInputFormatter()]
               ),
 
               const Text(
