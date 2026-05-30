@@ -91,11 +91,12 @@ class _CadastroPageState extends State<CadastroPage> {
     }
   }
 
-  String? validarEmail(String? value) {
-    if (value == null || value.isEmpty) return "Informe o e-mail";
-    if (!value.contains("@")) return "E-mail inválido";
-    return null;
-  }
+String? validarEmail(String? value) {
+  if (value == null || value.isEmpty) return "Informe o e-mail";
+  final regex = RegExp(r'^[\w.-]+@[\w.-]+\.\w{2,}$');
+  if (!regex.hasMatch(value)) return "E-mail inválido";
+  return null;
+}
 
   String? validarCPF(String? value) {
     if (value == null || value.isEmpty) return "Informe o CPF";
@@ -109,11 +110,14 @@ class _CadastroPageState extends State<CadastroPage> {
     return null;
   }
 
-  String? validarSenha(String? value) {
-    if (value == null || value.isEmpty) return "Informe a senha";
-    if (value.length < 6) return "Mínimo 6 caracteres";
-    return null;
-  }
+String? validarSenha(String? value) {
+  if (value == null || value.isEmpty) return "Informe a senha";
+  if (value.length < 8) return "Mínimo 8 caracteres";
+  if (!value.contains(RegExp(r'[A-Z]'))) return "Use ao menos uma letra maiúscula";
+  if (!value.contains(RegExp(r'[0-9]'))) return "Use ao menos um número";
+  if (!value.contains(RegExp(r'[^A-Za-z0-9]'))) return "Use ao menos um caractere especial";
+  return null;
+}
 
   String? validarConfirmacao(String? value) {
     if (value != senhaController.text) return "Senhas não coincidem";
