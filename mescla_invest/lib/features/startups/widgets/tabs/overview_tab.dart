@@ -1,132 +1,244 @@
 import 'package:flutter/material.dart';
+import '../buyToken_page.dart';
+import '../sellToken_page.dart';
 
 class OverviewTab extends StatelessWidget {
   final Map<String, dynamic> startup;
-  const OverviewTab({super.key, required this.startup});
+  final bool canTradeTokens;
+
+  const OverviewTab({
+    super.key,
+    required this.startup,
+    this.canTradeTokens = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final descricao = startup['descricao'] ?? startup['description'] ?? 'Descrição não Diponível';
-    final total = (startup['tokensEmitidos'] ?? startup['tokens'] ?? 0) as num;
+    final descricao = startup['descricao'] ?? 'Descrição não disponível';
+    final total = (startup['tokensEmitidos'] ?? 0) as num;
     final disponiveis = (startup['tokensDisponiveis'] ?? 0) as num;
     final percentual = total > 0 ? (disponiveis / total * 100) : 0;
-    final mentores = (startup['mentores'] ?? startup['mentors'] ?? <dynamic>[]) as List;
+    final mentores = (startup['mentores'] ?? <dynamic>[]) as List;
 
-    Widget sectionCard() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Sumário Executivo',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+
+        const SizedBox(height: 16),
+
+        Text(
+          descricao,
+          style: const TextStyle(
+            fontSize: 16,
+            height: 1.6,
+            color: Color(0xFF4B5563),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        _tokenCard(total, disponiveis, percentual),
+
+        const SizedBox(height: 20),
+
+        _mentorCard(mentores),
+
+        // Botões só aparecem para investidores
+        if (canTradeTokens) ...[
+          const SizedBox(height: 28),
+          const Text(
+            'Negociar Tokens',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Compre ou venda tokens diretamente com a startup.',
+            style: TextStyle(color: Colors.black45, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BuyTokenPage(startup: startup),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.shopping_cart_outlined),
+                  label: const Text('Comprar'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2563EB),
+                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SellTokenPage(startup: startup),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.attach_money),
+                  label: const Text('Vender'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color.fromRGBO(245, 73, 0, 1),
+                    side: const BorderSide(
+                      color: Color.fromRGBO(245, 73, 0, 1),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
+      ],
+    );
+  }
+
+  Widget _tokenCard(num total, num disponiveis, num percentual) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color.fromARGB(255, 222, 222, 222), width: 1),
+        border: Border.all(color: const Color.fromARGB(255, 222, 222, 222)),
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0,6))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Tokens', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const Text(
+            'Tokens',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 18),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Total de Tokens'),
-            Text('${_formatarMilhar(total)}', style: const TextStyle(fontWeight: FontWeight.bold)),
-          ]),
+          _linhaInfo('Total de Tokens', _formatarMilhar(total)),
           const SizedBox(height: 12),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Tokens Disponíveis'),
-            Text('${_formatarMilhar(disponiveis)}', style: const TextStyle(fontWeight: FontWeight.bold)),
-          ]),
+          _linhaInfo('Tokens Disponíveis', _formatarMilhar(disponiveis)),
           const SizedBox(height: 12),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Percentual Disponível'),
-            Text('${percentual.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold)),
-          ]),
+          _linhaInfo(
+            'Percentual Disponível',
+            '${percentual.toStringAsFixed(1)}%',
+          ),
         ],
       ),
     );
   }
 
-  Widget mentorCard() {
+  Widget _mentorCard(List mentores) {
+    if (mentores.isEmpty) return const SizedBox.shrink();
+
     return Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      border: Border.all(color: const Color.fromARGB(255, 222, 222, 222), width: 1),
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
-      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0,6))],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Mentores', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 18),
-        ...mentores.map((m) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              Container(width: 52, height: 52, decoration: BoxDecoration(color: Color(0xFFE8F0FE), shape: BoxShape.circle),
-                child: const Icon(Icons.person_outline, color: Color(0xFF2563EB), size: 28),
-              ),
-              const SizedBox(width: 14),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(m.toString(), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                const Text('Mentor', style: TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
-              ]),
-            ],
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color.fromARGB(255, 222, 222, 222)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
           ),
-        )).toList(),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Mentores',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 18),
+          ...mentores.map(
+            (m) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE8F0FE),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person_outline,
+                      color: Color(0xFF2563EB),
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        m.toString(),
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Mentor',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _linhaInfo(String label, String valor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label),
+        Text(valor, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
-    ),
-);
-}
-
-
-    return ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-
-                        const Text(
-                          'Sumário Executivo',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        Text(
-                          descricao,
-                          style: TextStyle(
-                            fontSize: 16,
-                            height: 1.6,
-                            color: Color(0xFF4B5563),
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        sectionCard(),
-
-                        const SizedBox(height: 20),
-
-                        mentorCard(),
-                      ],
-                    );
-  }
-    String _formatarReal(num valor) {
-    final texto = valor.toStringAsFixed(2);
-    final partes = texto.split('.');
-    final inteira = partes[0];
-    final decimal = partes[1];
-    final formatada = inteira.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
-    return '$formatada,$decimal';
+    );
   }
 
-  String _formatarMilhar(num valor) {
-    final texto = valor.toStringAsFixed(2);
-    return texto.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
-
+  static String _formatarMilhar(num valor) {
+    return valor
+        .toStringAsFixed(0)
+        .replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
   }
 }
-
