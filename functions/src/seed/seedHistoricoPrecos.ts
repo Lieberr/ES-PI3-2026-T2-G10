@@ -23,7 +23,8 @@ async function seedHistoricoPrecos(): Promise<void> {
 
   const snap = await db.collection("startups").get();
   if (snap.empty) {
-    console.log("Nenhuma startup encontrada. Rode o seed de startups primeiro.");
+    console.log(
+      "Nenhuma startup encontrada. Rode o seed de startups primeiro.");
     process.exit(1);
   }
 

@@ -50,7 +50,8 @@ export const getStartupById = onCall(
     return {
       startup,
       isInvestor,
-      canTradeTokens: isInvestor,
+      canTradeTokens: true,
+      canAccessBalcao: isInvestor,
       canSendPrivateQuestion: isInvestor,
     };
   }

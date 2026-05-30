@@ -1,7 +1,6 @@
 // Feito por Gustavo Lieb RA: 24023376
 // Feito por Leonardo Dionel RA: 25010092
 
-export { listarStartupsHandler } from "./handlers/listarStartups";
 export {getStartups, getStartupById, getStartupPorEstagio}
   from "./handlers/getStartups";
 export {criarOfertaBalcao} from "./handlers/criarOfertaBalcao";

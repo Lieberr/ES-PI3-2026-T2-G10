@@ -1,15 +1,20 @@
+// Feito por Leonardo Dionel RA: 25010092
+
 import 'package:flutter/material.dart';
-import '../buyToken_page.dart';
-import '../sellToken_page.dart';
+import '../token_history_chart.dart';
+import 'buyToken_page.dart';
+import 'sellToken_page.dart';
 
 class OverviewTab extends StatelessWidget {
   final Map<String, dynamic> startup;
   final bool canTradeTokens;
+  final bool canAccessBalcao;
 
   const OverviewTab({
     super.key,
     required this.startup,
-    this.canTradeTokens = false,
+    this.canTradeTokens = true,
+    this.canAccessBalcao = false,
   });
 
   @override
@@ -19,35 +24,44 @@ class OverviewTab extends StatelessWidget {
     final disponiveis = (startup['tokensDisponiveis'] ?? 0) as num;
     final percentual = total > 0 ? (disponiveis / total * 100) : 0;
     final mentores = (startup['mentores'] ?? <dynamic>[]) as List;
+    final valorTokenNum = (startup['valorToken'] as num?)?.toDouble() ?? 0;
+    final capitalNum = (startup['capitalAportado'] as num?) ?? 0;
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text(
-          'Sumário Executivo',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        // gráfico de histórico
+        TokenHistoryChart(
+          startupId: startup['id'] ?? '',
+          valorAtual: valorTokenNum,
         ),
 
         const SizedBox(height: 16),
 
-        Text(
-          descricao,
-          style: const TextStyle(
-            fontSize: 16,
-            height: 1.6,
-            color: Color(0xFF4B5563),
-          ),
+        // cards de valor e capital
+        Row(
+          children: [
+            Expanded(
+              child: _infoCard(
+                Icons.account_balance_wallet_outlined,
+                'Valor do Token',
+                'R\$ ${_formatarReal(valorTokenNum)}',
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _infoCard(
+                Icons.groups_2_outlined,
+                'Capital Aportado',
+                'R\$ ${_formatarReal(capitalNum)}',
+              ),
+            ),
+          ],
         ),
 
         const SizedBox(height: 24),
 
-        _tokenCard(total, disponiveis, percentual),
-
-        const SizedBox(height: 20),
-
-        _mentorCard(mentores),
-
-        // Botões só aparecem para investidores
+        // botões de compra e venda — mercado primário (todos podem)
         if (canTradeTokens) ...[
           const SizedBox(height: 28),
           const Text(
@@ -77,7 +91,7 @@ class OverviewTab extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2563EB),
                     side: const BorderSide(color: Color(0xFF2563EB)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 28),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -102,7 +116,7 @@ class OverviewTab extends StatelessWidget {
                     side: const BorderSide(
                       color: Color.fromRGBO(245, 73, 0, 1),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 28),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -113,7 +127,82 @@ class OverviewTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
         ],
+
+        const Text(
+          'Sumário Executivo',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          descricao,
+          style: const TextStyle(
+            fontSize: 16,
+            height: 1.6,
+            color: Color(0xFF4B5563),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        _tokenCard(total, disponiveis, percentual),
+
+        const SizedBox(height: 20),
+
+        _mentorCard(mentores),
+
+        // botão do balcão — só para investidores
+        if (canAccessBalcao) ...[
+          const SizedBox(height: 8),
+          ElevatedButton.icon(
+            onPressed: () {
+              // navegar para tela do balcão
+            },
+            icon: const Icon(Icons.store_outlined),
+            label: const Text('Acessar Balcão de Negociações'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ],
+    );
+  }
+
+  Widget _infoCard(IconData icon, String title, String value) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color.fromARGB(255, 225, 225, 225)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: const Color(0xFF2563EB)),
+              const SizedBox(width: 6),
+              Text(title, style: const TextStyle(color: Colors.black54)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -240,5 +329,14 @@ class OverviewTab extends StatelessWidget {
     return valor
         .toStringAsFixed(0)
         .replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+  }
+
+  static String _formatarReal(num valor) {
+    final texto = valor.toStringAsFixed(2);
+    final partes = texto.split('.');
+    final inteira = partes[0];
+    final decimal = partes[1];
+    final formatada = inteira.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
+    return '$formatada,$decimal';
   }
 }
