@@ -14,6 +14,7 @@ export async function criarCarteira(uid: string): Promise<void> {
   const carteira: Carteira = {
     uid,
     saldo: 0,
+    saldoReservado: 0,
     criadoEm: Timestamp.now(),
   };
   const carteirasCollection = db.collection("carteiras");
@@ -37,10 +38,10 @@ export async function registrarOperacao(operacao: Operacao): Promise<void> {
  * @param {number} novoSaldo - Novo saldo do usuario
  * @return {Promise<void>}
  */
-export async function atualizarSaldo(uid: string, novoSaldo: number) {
-  await db.collection("carteiras").doc(uid).update({
-    saldo: novoSaldo,
-  });
+export async function atualizarSaldo(
+  uid: string, novoSaldo: number
+): Promise<void> {
+  await db.collection("carteiras").doc(uid).update({saldo: novoSaldo});
 }
 
 
@@ -94,7 +95,9 @@ export async function atualizarTokenUsuario(
 ): Promise<void> {
   await db.collection("carteiras").doc(uid)
     .collection("tokens").doc(startupId).set(
-      {quantidade: novaQuantidade},
+      {quantidade: novaQuantidade,
+        quantidadeReservada: 0,
+      },
       {merge: true}
     );
 }
