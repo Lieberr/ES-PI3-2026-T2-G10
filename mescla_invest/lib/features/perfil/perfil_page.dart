@@ -1,6 +1,3 @@
-//Feito por Gustavo Lieb RA: 24023376
-
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -20,9 +17,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   bool is2FAEnabled = false;
   File? _profileImage;
-  String? displayName;
-  String? email;
-  String? _photoUrl;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -34,6 +28,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Stream<double> _saldoStream() {
     final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return Stream.value(0.0);
     return FirebaseFirestore.instance
         .collection('carteiras')
         .doc(user.uid)
@@ -454,43 +449,7 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         _profileImage = File(image.path);
       });
-
-  Future<void> pickImage() async {
-  final XFile? image = await _picker.pickImage(
-    source: ImageSource.gallery,
-    imageQuality: 50, // comprime bastante para caber no Firestore
-  );
-
-  if (image == null) return;
-
-}
-
-  @override
-  void initState() {
-    super.initState();
-
-    final user = FirebaseAuth.instance.currentUser;
-    displayName = user?.displayName ?? "Usuario Demo";
-    email = user?.email ?? "usuario@gmail.com";
-    _photoUrl = user?.photoURL;
-
-  // busca a foto salva no Firestore
-  final uid = user?.uid;
-  if (uid != null) {
-    FirebaseFirestore.instance
-        .collection('usuarios')
-        .doc(uid)
-        .get()
-        .then((doc) {
-      if (doc.exists) {
-        final fotoUrl = doc.data()?['fotoUrl'];
-        if (fotoUrl != null && mounted) {
-          setState(() => _photoUrl = fotoUrl);
-        }
-      }
-    });
-  }
-
+    }
   }
 
   // ─── BUILD ────────────────────────────────────────────────────────────────
