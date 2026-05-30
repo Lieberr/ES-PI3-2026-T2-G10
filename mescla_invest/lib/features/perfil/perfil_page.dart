@@ -277,27 +277,6 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
 
-
-            //Depositar
-            buildTile(
-              icon: Icons.arrow_downward,
-              title: "Depositar",
-              subtitle: "Adicionar saldo à sua carteira",
-              onTap: () {
-                Navigator.pushNamed(context, '/depositar');
-              }
-            ),
-
-            // Sacar
-            buildTile(
-              icon: Icons.arrow_upward,
-              title: "Sacar",
-              subtitle: "Retirar saldo da sua carteira",
-              onTap: () {
-                Navigator.pushNamed(context, '/sacar');
-              }
-            ),
-
             buildTile(
               icon: Icons.help_outline,
               title: "Ajuda e Suporte",
