@@ -4,14 +4,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-
 import 'firebase_options.dart';
-
 import 'package:mescla_invest/features/auth/login_page.dart';
 import 'package:mescla_invest/features/auth/cadastro_page.dart';
 import 'package:mescla_invest/features/auth/recuperar_senha.dart';
-
 import 'package:mescla_invest/widgets/main_navigation.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +54,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/cadastro': (context) => const CadastroPage(),
         '/recuperar-senha': (context) => const RecuperarSenhaPage(),
+
 
         '/main': (context) => const MainNavigation(),
       },
