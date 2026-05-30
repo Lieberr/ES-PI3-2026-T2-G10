@@ -92,7 +92,7 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     });
   }
-  
+
   }
 
   @override
@@ -182,68 +182,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
             const SizedBox(height: 25),
 
-            // Card Saldo
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(22),
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xff2453ff),
-                      Color(0xff1d3ed8),
-                    ],
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Saldo Disponível",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    const Text(
-                      "R\$ 10.000,00",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 34,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.add),
-                        label: const Text("Adcionar Saldo"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xff2453ff),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 25),
+           
 
             // Opcoes
             buildTile(
@@ -336,6 +275,27 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               ),
+            ),
+
+
+            //Depositar
+            buildTile(
+              icon: Icons.arrow_downward,
+              title: "Depositar",
+              subtitle: "Adicionar saldo à sua carteira",
+              onTap: () {
+                Navigator.pushNamed(context, '/depositar');
+              }
+            ),
+
+            // Sacar
+            buildTile(
+              icon: Icons.arrow_upward,
+              title: "Sacar",
+              subtitle: "Retirar saldo da sua carteira",
+              onTap: () {
+                Navigator.pushNamed(context, '/sacar');
+              }
             ),
 
             buildTile(
