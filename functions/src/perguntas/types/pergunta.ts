@@ -1,20 +1,21 @@
 // Feito por: Matheus Henrique Portugal Narducci RA: 2500896
 
 import {Timestamp} from "firebase-admin/firestore";
-
+ 
 export interface Pergunta {
-    id: string,
-    startupId: string,
-    autorUid: string,
-    autorNome: string,
-    texto: string,
-    resposta: string | null,
-    respondidoEm: Timestamp | null,
-    criadoEm: Timestamp
-    publica: boolean,
+  id: string;
+  startupId: string;
+  autorUid: string;
+  autorNome: string;
+  texto: string;
+  resposta: string | null;
+  respondidoEm: Timestamp | null;
+  criadoEm: Timestamp;
+  publica: boolean; // true = visível a todos | false = só investidores
 }
-
+ 
 export interface CriarPerguntaInput {
-    startupId: string,
-    texto: string,
+  startupId: string;
+  texto: string;
 }
+ 
