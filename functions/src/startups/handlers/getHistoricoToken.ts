@@ -67,7 +67,7 @@ export const getHistoricoToken = onCall(
             .get(),
           historico
             .where("data", ">=", Timestamp.fromDate(inicioMensal))
-            .orderBy("date", "asc")
+            .orderBy("data", "asc")
             .get(),
           historico
             .where("data", ">=", Timestamp.fromDate(inicioSeisMeses))
@@ -106,7 +106,7 @@ export const getHistoricoToken = onCall(
         diario: calcularVariacao(snapDiario),
         semanal: calcularVariacao(snapSemanal),
         mensal: calcularVariacao(snapMensal),
-        semestral: calcularVariacao(snapSeisMeses),
+        SeisMeses: calcularVariacao(snapSeisMeses),
         ytd: calcularVariacao(snapYTD),
       },
       historicoGrafico: registrosTodos,
