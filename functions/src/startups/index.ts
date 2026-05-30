@@ -9,3 +9,4 @@ export {aceitarOferta} from "./handlers/aceitarOferta";
 export {cancelarOfertaBalcao} from "./handlers/cancelarOfertaBalcao";
 export {getOfertasAbertas} from "./handlers/getOfertasAbertas";
 export {getMinhasOfertas} from "./handlers/getMinhasOfertas";
+export {getHistoricoToken} from "./handlers/getHistoricoToken";
