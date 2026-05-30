@@ -34,6 +34,30 @@ class CpfInputFormatter extends TextInputFormatter {
   }
 }
 
+class TelefoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 11) digits = digits.substring(0, 11);
+
+    String formatted = '';
+    for (int i = 0; i < digits.length; i++) {
+      if (i == 0) formatted += '(';
+      if (i == 2) formatted += ') ';
+      if (i == 7) formatted += '-';
+      formatted += digits[i];
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
 class _CadastroPageState extends State<CadastroPage> {
   final _formKey = GlobalKey<FormState>();
 
@@ -272,6 +296,7 @@ String? validarSenha(String? value) {
                 icon: Icons.phone,
                 controller: telefoneController,
                 validator: validarTelefone,
+                inputFormatters: [TelefoneInputFormatter()],
               ),
 
               const Text(
