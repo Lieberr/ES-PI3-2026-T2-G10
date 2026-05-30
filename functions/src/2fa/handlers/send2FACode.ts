@@ -7,6 +7,7 @@ import {
 } from "../repositories/twofaRepository";
 import * as crypto from "crypto";
 
+
 export const send2FACode = onCall(
   async (request: CallableRequest<Record<string, unknown>>) => {
     const uid = request.auth?.uid;

@@ -10,106 +10,106 @@ import {buscarStartupsPorId}
 import {db} from "../../shared/firebase";
 
 export const getHistoricoToken = onCall(
-    async (request:CallableRequest<{startupId: string}>) => {
-        const uid = request.auth?.uid;
-        if(!uid) {
-            throw new HttpsError(
-                "not-found",
-                "Usuário não encontrado."
-            );
-        }
+  async (request:CallableRequest<{startupId: string}>) => {
+    const uid = request.auth?.uid;
+    if (!uid) {
+      throw new HttpsError(
+        "not-found",
+        "Usuário não encontrado."
+      );
+    }
 
-        const {startupId} = request.data;
+    const {startupId} = request.data;
 
-        if(!startupId) {
-            throw new HttpsError(
-                "invalid-argument",
-                "StartupId é obrigatoria"
-            );
-        }
+    if (!startupId) {
+      throw new HttpsError(
+        "invalid-argument",
+        "StartupId é obrigatoria"
+      );
+    }
 
-        const startup = await buscarStartupsPorId(startupId);
-        if(!startup) {
-            throw new HttpsError(
-                "not-found",
-                "Startup não encontrada."
-            );
-        }
-        
-        const agora = new Date();
+    const startup = await buscarStartupsPorId(startupId);
+    if (!startup) {
+      throw new HttpsError(
+        "not-found",
+        "Startup não encontrada."
+      );
+    }
 
-        const inicioDiario = new Date(agora);
-        inicioDiario.setDate(agora.getDate() - 1);
+    const agora = new Date();
 
-        const inicioSemanal = new Date(agora);
-        inicioSemanal.setDate(agora.getDate() - 7);
+    const inicioDiario = new Date(agora);
+    inicioDiario.setDate(agora.getDate() - 1);
 
-        const inicioMensal = new Date(agora);
-        inicioMensal.setDate(agora.getDate() - 30);
+    const inicioSemanal = new Date(agora);
+    inicioSemanal.setDate(agora.getDate() - 7);
 
-        const inicioSeisMeses = new Date(agora);
-        inicioSeisMeses.setDate(agora.getDate() - 180);
-    
-        const inicioYTD = new Date(agora.getFullYear(), 0, 1);
+    const inicioMensal = new Date(agora);
+    inicioMensal.setDate(agora.getDate() - 30);
 
-        const historico = db.collection("startups")
-        .doc(startupId).collection("historicoPrecos");
+    const inicioSeisMeses = new Date(agora);
+    inicioSeisMeses.setDate(agora.getDate() - 180);
 
-        const [snapDiario, snapSemanal, snapMensal, snapSeisMeses, snapYTD] = 
+    const inicioYTD = new Date(agora.getFullYear(), 0, 1);
+
+    const historico = db.collection("startups")
+      .doc(startupId).collection("historicoPrecos");
+
+    const [snapDiario, snapSemanal, snapMensal, snapSeisMeses, snapYTD] =
         await Promise.all([
-            historico
+          historico
             .where("data", ">=", Timestamp.fromDate(inicioDiario))
             .orderBy("data", "asc")
             .get(),
-            historico
+          historico
             .where("data", ">=", Timestamp.fromDate(inicioSemanal))
             .orderBy("data", "asc")
             .get(),
-            historico
+          historico
             .where("data", ">=", Timestamp.fromDate(inicioMensal))
             .orderBy("date", "asc")
             .get(),
-            historico
+          historico
             .where("data", ">=", Timestamp.fromDate(inicioSeisMeses))
             .orderBy("data", "asc")
             .get(),
-            historico
+          historico
             .where("data", ">=", Timestamp.fromDate(inicioYTD))
             .orderBy("data", "asc")
             .get(),
         ]);
-        const calcularVariacao = (
-            snap: FirebaseFirestore.QuerySnapshot
-        ): number => {
-            const registros = snap.docs.map(
-                (doc) => doc.data() as HistoricoPrecos
-            );
-            if(registros.length === 0) return 0;
+    const calcularVariacao = (
+      snap: FirebaseFirestore.QuerySnapshot
+    ): number => {
+      const registros = snap.docs.map(
+        (doc) => doc.data() as HistoricoPrecos
+      );
+      if (registros.length === 0) return 0;
 
-            const precoInicial = registros[0].valorToken;
-            const precoFinal = registros[registros.length - 1].valorToken;
+      const precoInicial = registros[0].valorToken;
+      const precoFinal = registros[registros.length - 1].valorToken;
 
-            return ((precoFinal - precoInicial) / precoInicial) * 100
-        };
+      return ((precoFinal - precoInicial) / precoInicial) * 100;
+    };
 
-        const registrosTodos = snapSeisMeses.docs.map((doc) =>{
-            const d = doc.data() as HistoricoPrecos;
-            return {
-                valorToken: d.valorToken,
-                data: (d.data as Timestamp).toDate().toISOString(),
-            };
-        });
+    const registrosTodos = snapSeisMeses.docs.map((doc) =>{
+      const d = doc.data() as HistoricoPrecos;
+      return {
+        valorToken: d.valorToken,
+        data: (d.data as Timestamp).toDate().toISOString(),
+      };
+    });
 
-        return {
-            precoAtual: startup.valorToken,
-            variacoes: {
-                diario: calcularVariacao(snapDiario),
-                semanal: calcularVariacao(snapSemanal),
-                mensal: calcularVariacao(snapMensal),
-                semestral: calcularVariacao(snapSeisMeses),
-                ytd: calcularVariacao(snapYTD),
-            },
-            historicoGrafico: registrosTodos,
-        };
-    }
+    return {
+      precoAtual: startup.valorToken,
+      variacoes: {
+        diario: calcularVariacao(snapDiario),
+        semanal: calcularVariacao(snapSemanal),
+        mensal: calcularVariacao(snapMensal),
+        semestral: calcularVariacao(snapSeisMeses),
+        ytd: calcularVariacao(snapYTD),
+      },
+      historicoGrafico: registrosTodos,
+    };
+  }
 );

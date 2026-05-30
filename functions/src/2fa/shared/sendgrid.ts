@@ -1,8 +1,6 @@
-import {defineSecret} from "firebase-functions/params";
 import sgMail from "@sendgrid/mail";
 
 
-const SENDGRID_KEY = defineSecret("SENDGRID_KEY");
 
 /**
  * Envia o código 2FA para o email do usuário por SendGrid.
@@ -13,11 +11,11 @@ export async function enviarCodigoEmail(
   email: string,
   code: string,
 ) {
-  sgMail.setApiKey(SENDGRID_KEY.value());
+  sgMail.setApiKey("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");
 
   await sgMail.send({
     to: email,
-    from: "no-reply@seu-dominio.com",
+    from: "gustavoliebfigueira1@gmail.com",
     subject: "Seu código de verificação 2FA",
     text: `Seu código de verificação é ${code}.`,
     html: `<p>Seu código de verificação é <strong>${code}</strong>.</p>`,
