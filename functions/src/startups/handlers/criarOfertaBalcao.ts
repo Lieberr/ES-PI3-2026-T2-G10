@@ -59,7 +59,7 @@ export const criarOfertaBalcao = onCall(
       }
       const oferta: TransacaoSecundaria = {
         uidComprador: uid,
-        uidVendedor: undefined,
+        uidVendedor: null,
         startupId,
         quantidade,
         valorUnitario,
@@ -94,7 +94,7 @@ export const criarOfertaBalcao = onCall(
       }
       const novaQuantidade = quantidadeAtual - quantidade;
       const oferta: TransacaoSecundaria = {
-        uidComprador: undefined,
+        uidComprador: null,
         uidVendedor: uid,
         startupId,
         quantidade,
