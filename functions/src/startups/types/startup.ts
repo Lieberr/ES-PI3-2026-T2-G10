@@ -1,4 +1,3 @@
-
 // Feito por Leonardo Dionel RA: 25010092
 
 import {Timestamp} from "firebase-admin/firestore";
@@ -13,7 +12,6 @@ export interface HistoricoPrecos {
     valorToken: number;
     data: Timestamp;
 }
-
 
 export interface Startup {
     id: string;
@@ -30,4 +28,3 @@ export interface Startup {
     socios: Socio[];
     mentores: string[];
 }
-
