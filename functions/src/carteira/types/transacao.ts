@@ -13,8 +13,8 @@ export interface TransacaoPrimaria {
 }
 
 export interface TransacaoSecundaria {
-  uidComprador?: string;
-  uidVendedor?: string;
+  uidComprador: string | null;
+  uidVendedor: string | null; 
   startupId: string;
   quantidade: number;
   valorUnitario: number;

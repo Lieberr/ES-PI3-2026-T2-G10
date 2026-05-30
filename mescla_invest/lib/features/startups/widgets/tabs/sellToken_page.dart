@@ -20,15 +20,49 @@ class _SellTokenPageState extends State<SellTokenPage> {
 
   int _quantidade = 0;
   bool _enviando = false;
+  double _saldo = 0;
+  int _meuTokens = 0;
+  bool _carregandoDados = true;
 
   double get _precoUnitario =>
       (widget.startup['valorToken'] as num?)?.toDouble() ?? 0;
   double get _total => _quantidade * _precoUnitario;
 
   @override
+  void initState() {
+    super.initState();
+    carregarDados();
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> carregarDados() async {
+    try {
+      final callable = _functions.httpsCallable('getCarteira');
+      final result = await callable.call();
+      final saldo = (result.data['saldo'] as num?)?.toDouble() ?? 0;
+      final tokens = List<Map<String, dynamic>>.from(
+        (result.data['tokens'] ?? []).map((e) => Map<String, dynamic>.from(e)),
+      );
+      final tokenDaStartup = tokens.firstWhere(
+        (t) => t['startupId'] == widget.startup['id'],
+        orElse: () => {},
+      );
+      if (mounted) {
+        setState(() {
+          _saldo = saldo;
+          _meuTokens = (tokenDaStartup['quantidade'] as num?)?.toInt() ?? 0;
+          _carregandoDados = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('ERRO getCarteira: $e');
+      if (mounted) setState(() => _carregandoDados = false);
+    }
   }
 
   Future<void> confirmarVenda() async {
@@ -137,6 +171,32 @@ class _SellTokenPageState extends State<SellTokenPage> {
             ),
 
             const SizedBox(height: 20),
+
+            if (_carregandoDados)
+              const Center(child: CircularProgressIndicator())
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: _miniCard(
+                      'Seu saldo',
+                      'R\$ ${_formatarReal(_saldo)}',
+                      Icons.wallet,
+                      Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _miniCard(
+                      'Meus tokens',
+                      '$_meuTokens tokens',
+                      Icons.token,
+                      Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 16),
 
             // INPUT
             TextField(
@@ -269,4 +329,41 @@ class _SellTokenPageState extends State<SellTokenPage> {
     );
     return '$formatada,${partes[1]}';
   }
+}
+
+Widget _miniCard(String label, String valor, IconData icon, Color cor) {
+  return Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: cor.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: cor.withOpacity(0.2)),
+    ),
+    child: Row(
+      children: [
+        Icon(icon, color: cor, size: 20),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(fontSize: 11, color: Colors.black45),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                valor,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: cor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
