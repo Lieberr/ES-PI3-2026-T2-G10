@@ -1,4 +1,9 @@
+//Feito por Gustavo Lieb RA: 24023376
+
+
 import 'package:flutter/material.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Email2FAPage extends StatefulWidget {
   const Email2FAPage({super.key});
@@ -13,38 +18,75 @@ class _Email2FaPageState extends State<Email2FAPage> {
   bool codeSent = false;
   bool isVerified = false;
 
-  String fakeCode = "123456"; //Simulacao
 
-  void SendCode() {
+  Future<void> sendCode() async {
+  try {
+    final callable = FirebaseFunctions
+    .instanceFor(region: 'southamerica-east1')
+    .httpsCallable('send2FACode');
+    
+    // Pegamos o e-mail do usuário que está logado no app no momento
+    final userEmail = FirebaseAuth.instance.currentUser?.email;
+
+    if (userEmail == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Erro: Usuário não está logado no Firebase.")),
+      );
+      return;
+    }
+
+    // AGORA SIM: Enviamos o e-mail dentro do mapa para a Cloud Function
+    await callable.call({
+      'email': userEmail,
+    });
+
     setState(() {
       codeSent = true;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Código enviado para seu e-mail")),
+    );
+  } on FirebaseFunctionsException catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(e.message ?? "Erro ao enviar codigo.")),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Erro inesperado: $e')),
+    );
+  }
+}
+  Future<void> verifyCode() async {
+    try{
+      final callable = FirebaseFunctions
+    .instanceFor(region: 'southamerica-east1')
+    .httpsCallable('verify2FACode');
+    
+      await callable.call({
+        'code': codeController.text.trim(),
+    });
+
+    setState(() {
+      isVerified = true;
+    });
+
+     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("Código enviado para seu e-mail"),
+        content: Text('2FA ativado com sucesso'),
       ),
     );
 
-    //Aqui trocar para backend real depois
-    print("Codigo enviado: $fakeCode");
-  }
-
-  void verifyCode() {
-    if(codeController.text == fakeCode) {
-      setState(() {
-        isVerified = true;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("2FA ativado com sucesso"),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Código Inválido"),
+    } on FirebaseFunctionsException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message ?? 'Erro ao validar código'),
+          ),
+    );
+    } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro inesperado: $e'),
         ),
       );
     }
@@ -103,7 +145,7 @@ class _Email2FaPageState extends State<Email2FAPage> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: codeSent ? null : SendCode,
+                onPressed: codeSent ? null : sendCode,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xaff2453ff),
                   foregroundColor: Colors.white,
