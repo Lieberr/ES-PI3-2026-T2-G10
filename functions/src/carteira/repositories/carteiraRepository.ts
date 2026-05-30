@@ -37,10 +37,10 @@ export async function registrarOperacao(operacao: Operacao): Promise<void> {
  * @param {number} novoSaldo - Novo saldo do usuario
  * @return {Promise<void>}
  */
-export async function atualizarSaldo(
-  uid: string, novoSaldo: number
-): Promise<void> {
-  await db.collection("carteiras").doc(uid).update({saldo: novoSaldo});
+export async function atualizarSaldo(uid: string, novoSaldo: number) {
+  await db.collection("carteiras").doc(uid).update({
+    saldo: novoSaldo,
+  });
 }
 
 
