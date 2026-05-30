@@ -7,6 +7,11 @@ import 'dart:io';
 import 'package:mescla_invest/features/perfil/tabs/editarDadosPessoais_page.dart';
 import 'package:mescla_invest/features/perfil/tabs/2FA_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'dart:convert';
 
 
 class ProfilePage extends StatefulWidget {
@@ -21,20 +26,46 @@ class _ProfilePageState extends State<ProfilePage> {
   File? _profileImage;
   String? displayName;
   String? email;
+  String? _photoUrl;
 
   final ImagePicker _picker = ImagePicker();
 
   Future<void> pickImage() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
+  final XFile? image = await _picker.pickImage(
+    source: ImageSource.gallery,
+    imageQuality: 50, // comprime bastante para caber no Firestore
+  );
 
-    if(image != null) {
-      setState(() {
-        _profileImage = File(image.path);
-      });
+  if (image == null) return;
+
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid == null) return;
+
+  try {
+    final bytes = await image.readAsBytes();
+    final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+
+    await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .update({'fotoUrl': base64Image});
+
+    setState(() => _photoUrl = base64Image);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto atualizada com sucesso.')),
+      );
+    }
+  } catch (e) {
+    print('Erro: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao atualizar foto.')),
+      );
     }
   }
+}
 
   @override
   void initState() {
@@ -43,6 +74,25 @@ class _ProfilePageState extends State<ProfilePage> {
     final user = FirebaseAuth.instance.currentUser;
     displayName = user?.displayName ?? "Usuario Demo";
     email = user?.email ?? "usuario@gmail.com";
+    _photoUrl = user?.photoURL;
+
+  // busca a foto salva no Firestore
+  final uid = user?.uid;
+  if (uid != null) {
+    FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        final fotoUrl = doc.data()?['fotoUrl'];
+        if (fotoUrl != null && mounted) {
+          setState(() => _photoUrl = fotoUrl);
+        }
+      }
+    });
+  }
+  
   }
 
   @override
@@ -72,17 +122,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   Stack(
                     children: [
                       CircleAvatar(
-                        radius: 55,
+                       radius: 55,
                         backgroundColor: const Color(0xff2453ff).withOpacity(0.15),
-                        backgroundImage: _profileImage != null
-                            ? FileImage(_profileImage!)
-                            : null,
-                        child: _profileImage == null
-                            ? const Icon(
-                                Icons.person,
-                                size: 60,
-                                color: Color(0xff2453ff),
-                              )
+                        backgroundImage: _photoUrl != null
+                          ? (_photoUrl!.startsWith('data:')
+                              ? MemoryImage(base64Decode(_photoUrl!.split(',')[1]))
+                              : NetworkImage(_photoUrl!) as ImageProvider)
+                          : null,
+                        child: _photoUrl == null
+                            ? const Icon(Icons.person, size: 60, color: Color(0xff2453ff))
                             : null,
                       ),
 
