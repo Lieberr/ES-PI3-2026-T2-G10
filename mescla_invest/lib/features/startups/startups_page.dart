@@ -1,3 +1,6 @@
+//Feito por Gustavo Lieb RA: 24023376
+
+
 import 'package:flutter/material.dart';
 import 'widgets/startup_card.dart';
 import 'startup_details_page.dart';

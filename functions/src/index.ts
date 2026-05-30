@@ -10,3 +10,4 @@ setGlobalOptions({
 export * from "./usuarios";
 export * from "./carteira";
 export * from "./startups";
+export * from "./2fa";

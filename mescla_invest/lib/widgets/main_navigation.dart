@@ -1,3 +1,6 @@
+//Feito por Gustavo Lieb RA: 24023376
+
+
 import 'package:flutter/material.dart';
 import 'package:mescla_invest/features/startups/startups_page.dart';
 import 'package:mescla_invest/features/balcao/balcao_page.dart';

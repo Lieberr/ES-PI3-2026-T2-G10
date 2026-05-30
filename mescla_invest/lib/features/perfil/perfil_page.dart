@@ -1,8 +1,18 @@
+//Feito por Gustavo Lieb RA: 24023376
+
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:mescla_invest/features/perfil/tabs/editarDadosPessoais_page.dart';
 import 'package:mescla_invest/features/perfil/tabs/2FA_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'dart:convert';
+
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -14,19 +24,75 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   bool is2FAEnabled = false;
   File? _profileImage;
+  String? displayName;
+  String? email;
+  String? _photoUrl;
 
   final ImagePicker _picker = ImagePicker();
 
   Future<void> pickImage() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
+  final XFile? image = await _picker.pickImage(
+    source: ImageSource.gallery,
+    imageQuality: 50, // comprime bastante para caber no Firestore
+  );
 
-    if(image != null) {
-      setState(() {
-        _profileImage = File(image.path);
-      });
+  if (image == null) return;
+
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid == null) return;
+
+  try {
+    final bytes = await image.readAsBytes();
+    final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+
+    await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .update({'fotoUrl': base64Image});
+
+    setState(() => _photoUrl = base64Image);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto atualizada com sucesso.')),
+      );
     }
+  } catch (e) {
+    print('Erro: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao atualizar foto.')),
+      );
+    }
+  }
+}
+
+  @override
+  void initState() {
+    super.initState();
+
+    final user = FirebaseAuth.instance.currentUser;
+    displayName = user?.displayName ?? "Usuario Demo";
+    email = user?.email ?? "usuario@gmail.com";
+    _photoUrl = user?.photoURL;
+
+  // busca a foto salva no Firestore
+  final uid = user?.uid;
+  if (uid != null) {
+    FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        final fotoUrl = doc.data()?['fotoUrl'];
+        if (fotoUrl != null && mounted) {
+          setState(() => _photoUrl = fotoUrl);
+        }
+      }
+    });
+  }
+
   }
 
   @override
@@ -56,17 +122,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   Stack(
                     children: [
                       CircleAvatar(
-                        radius: 55,
+                       radius: 55,
                         backgroundColor: const Color(0xff2453ff).withOpacity(0.15),
-                        backgroundImage: _profileImage != null
-                            ? FileImage(_profileImage!)
-                            : null,
-                        child: _profileImage == null
-                            ? const Icon(
-                                Icons.person,
-                                size: 60,
-                                color: Color(0xff2453ff),
-                              )
+                        backgroundImage: _photoUrl != null
+                          ? (_photoUrl!.startsWith('data:')
+                              ? MemoryImage(base64Decode(_photoUrl!.split(',')[1]))
+                              : NetworkImage(_photoUrl!) as ImageProvider)
+                          : null,
+                        child: _photoUrl == null
+                            ? const Icon(Icons.person, size: 60, color: Color(0xff2453ff))
                             : null,
                       ),
 
@@ -94,8 +158,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   const SizedBox(height: 15),
 
-                  const Text(
-                    "Usuario Demo",
+                  Text(
+                    displayName ?? 'Usuario Demo',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -104,8 +168,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   const SizedBox(height: 5),
 
-                  const Text(
-                    "usuario@gmail.com",
+                  Text(
+                    email ?? 'usuario@gmail.com',
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: 15,
@@ -118,68 +182,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
             const SizedBox(height: 25),
 
-            // Card Saldo
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(22),
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xff2453ff),
-                      Color(0xff1d3ed8),
-                    ],
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Saldo Disponível",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    const Text(
-                      "R\$ 10.000,00",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 34,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.add),
-                        label: const Text("Adcionar Saldo"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xff2453ff),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 25),
+           
 
             // Opcoes
             buildTile(
