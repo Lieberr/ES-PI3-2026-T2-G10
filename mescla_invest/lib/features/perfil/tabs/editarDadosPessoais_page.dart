@@ -2,6 +2,8 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PersonalDataPage extends StatefulWidget {
   const PersonalDataPage({super.key});
@@ -15,20 +17,104 @@ class _PersonalDatePage extends State<PersonalDataPage> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController nameController =
-        TextEditingController(text: "Gustavo Lieb");
+        TextEditingController();
 
   final TextEditingController emailController =
-        TextEditingController(text: "gustavoliebfigueira@gmail.com");
+        TextEditingController();
 
   final TextEditingController phoneController =
-        TextEditingController(text: "(19) 99999-9999");
+        TextEditingController();
+        
+  String _cpfMascarado = '';
+  bool _carregando = true;
 
-  final TextEditingController passwordController = 
-        TextEditingController(text: "12345678");
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados();
+  }
 
+  double get _percentualPerfil {
+    int total = 0;
+    int preenchidos = 0;
+
+    //Cada campo vale 1 ponto
+    total += 5;
+    if (nameController.text.isNotEmpty) preenchidos++;
+    if (emailController.text.isNotEmpty) preenchidos++;
+    if(phoneController.text.isNotEmpty) preenchidos++;
+    if(_cpfMascarado.isNotEmpty) preenchidos++;
+    if(FirebaseAuth.instance.currentUser != null) preenchidos++;
+
+    return preenchidos / total;
+  }
+
+  String get _textoPercentual{
+    return '${(_percentualPerfil * 100).toInt()}% do perfil completo';
+  }
+
+        
+  Future<void> _carregarDados() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+    if(uid == null) return;
+
+    final doc = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(uid)
+          .get();
+    
+    if(doc.exists) {
+      final data = doc.data()!;
+      final cpf = data['cpf'] as String? ?? '';
+      final telefone = data['telefone'] as String? ?? '';
+
+
+      //Formatar Telefone
+      String telFomatado = telefone;
+      if(telefone.length == 11) {
+        telFomatado = 
+            '(${telefone.substring(0, 2)}) ${telefone.substring(2, 7)}-${telefone.substring(7)}';
+      } else if(telefone.length == 10) {
+        telFomatado = 
+            '(${telefone.substring(0, 2)}) ${telefone.substring(2, 6)}-${telefone.substring(6)}';
+      }
+
+      //Formatar CPF
+      String cpfMascarado = cpf;
+      if(cpf.length == 11) {
+        cpfMascarado = 
+          '${cpf.substring(0, 3)}.***.***-${cpf.substring(9)}';
+      }
+
+      setState(() {
+        nameController.text = data['nomeCompleto'] ?? '';
+        emailController.text = data['email'] ?? '';
+        phoneController.text = telFomatado;
+        _cpfMascarado = cpfMascarado;
+        _carregando = false;
+      });
+
+    } else {
+      setState(() {
+        _carregando = false;
+      });
+    } 
+    } catch (e) {
+      print("ERRO AO CARREGAR DADOS: $e");
+      setState(() {
+        _carregando = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_carregando) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       backgroundColor: const Color(0xfff5f6fa),
 
@@ -97,8 +183,8 @@ class _PersonalDatePage extends State<PersonalDataPage> {
 
                     const SizedBox(height: 15),
 
-                    const Text(
-                      "65% do perfil completo",
+                    Text(
+                      _textoPercentual,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -110,7 +196,7 @@ class _PersonalDatePage extends State<PersonalDataPage> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: LinearProgressIndicator(
-                        value: 0.65,
+                        value: _percentualPerfil,
                         minHeight: 8,
                         backgroundColor: Colors.grey.shade300,
                         valueColor: const AlwaysStoppedAnimation(
@@ -155,18 +241,18 @@ class _PersonalDatePage extends State<PersonalDataPage> {
               //CPF
               buildReadOnlyField(
                 label: "CPF",
-                value: "123.***.***-90",
+                value: _cpfMascarado,
                 icon: Icons.badge_outlined,
               ),
 
               const SizedBox(height: 18),
 
               //Senha
-              buildTextField(
-                controller: passwordController,
+              buildReadOnlyField(
                 label: "Senha",
+                value:  "********",
                 icon: Icons.lock_outline,
-                obscureText: true,
+                
               ),
 
               const SizedBox(height: 35),
