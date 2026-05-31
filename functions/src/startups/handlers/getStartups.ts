@@ -6,6 +6,32 @@ import {buscarTokenUsuario}
   from "../../carteira/repositories/carteiraRepository";
 import {buscarStartupPorEstagio, buscarStartups, buscarStartupsPorId}
   from "../repositories/startupRepository";
+import {db} from "../../shared/firebase";
+import { Timestamp } from "firebase-admin/firestore";
+
+async function calcularVariacaoMensal(
+  startupId: string,
+  valorAtual: number,
+): Promise<number> {
+  const umMesAtras = new Date();
+  umMesAtras.setDate(umMesAtras.getDate() - 30);
+
+  const snap = await db
+    .collection("startups")
+    .doc(startupId)
+    .collection("historicoPrecos")
+    .where("data", ">=", Timestamp.fromDate(umMesAtras))
+    .orderBy("data", "asc")
+    .limit(1)
+    .get();
+
+  if(snap.empty) return 0;
+
+  const precoInicio = snap.docs[0].data().valorToken as number;
+  if(precoInicio === 0) return 0;
+
+  return ((valorAtual - precoInicio) / precoInicio  ) * 100;
+}
 
 export const getStartups = onCall(
   async (request: CallableRequest<void>) => {
