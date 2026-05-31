@@ -2,16 +2,21 @@
 
 import {CallableRequest, HttpsError, onCall} from
   "firebase-functions/v2/https";
-import {buscarTokenUsuario}
-  from "../../carteira/repositories/carteiraRepository";
-import {buscarStartupPorEstagio, buscarStartups, buscarStartupsPorId}
-  from "../repositories/startupRepository";
+import {
+  buscarStartupPorEstagio,
+  buscarStartups,
+  buscarStartupsPorId,
+} from "../repositories/startupRepository";
+import {Timestamp} from "firebase-admin/firestore";
 import {db} from "../../shared/firebase";
-import { Timestamp } from "firebase-admin/firestore";
+import {
+  buscarTokenUsuario,
+} from "../../carteira/repositories/carteiraRepository";
 
+// Calcula a variação percentual do token no último mês
 async function calcularVariacaoMensal(
   startupId: string,
-  valorAtual: number,
+  valorAtual: number
 ): Promise<number> {
   const umMesAtras = new Date();
   umMesAtras.setDate(umMesAtras.getDate() - 30);
@@ -25,25 +30,38 @@ async function calcularVariacaoMensal(
     .limit(1)
     .get();
 
-  if(snap.empty) return 0;
+  if (snap.empty) return 0;
 
   const precoInicio = snap.docs[0].data().valorToken as number;
-  if(precoInicio === 0) return 0;
+  if (precoInicio === 0) return 0;
 
-  return ((valorAtual - precoInicio) / precoInicio  ) * 100;
+  return ((valorAtual - precoInicio) / precoInicio) * 100;
 }
 
 export const getStartups = onCall(
   async (request: CallableRequest<void>) => {
     const uid = request.auth?.uid;
-    if (!uid) {
+    if(!uid) {
       throw new HttpsError(
         "unauthenticated",
-        "Usuário não autenticado.");
+        "Usuário não autenticado."
+      );
     }
 
     const startups = await buscarStartups();
-    return {startups};
+
+    // Calcula a variação mensal de todas as startups em paralelo
+    const startupsComVariacao = await Promise.all(
+      startups.map(async (startup) => {
+        const variacao = await calcularVariacaoMensal(
+          startup.id,
+          startup.valorToken
+        );
+        return {...startup, variacaoMensal: variacao};
+      })
+    );
+
+    return {startups: startupsComVariacao};
   }
 );
 
@@ -53,16 +71,17 @@ export const getStartupById = onCall(
     if (!uid) {
       throw new HttpsError(
         "unauthenticated",
-        "Usuário não autenticado.");
+        "Usuário não autenticado."
+      );
     }
-    const data = request.data;
-    const {id} = data;
+    const {id} = request.data;
     if (!id) {
       throw new HttpsError(
         "invalid-argument",
         "ID da startup é obrigatório."
       );
     }
+
     const [startup, tokens] = await Promise.all([
       buscarStartupsPorId(id),
       buscarTokenUsuario(uid),
@@ -71,8 +90,10 @@ export const getStartupById = onCall(
     if (!startup) {
       throw new HttpsError("not-found", "Startup não encontrada.");
     }
+
     const tokenDaStartup = tokens?.find((t) => t.startupId === id);
     const isInvestor = (tokenDaStartup?.quantidade ?? 0) > 0;
+
     return {
       startup,
       isInvestor,
@@ -86,13 +107,13 @@ export const getStartupById = onCall(
 export const getStartupPorEstagio = onCall(
   async (request: CallableRequest<{estagio: string}>) => {
     const uid = request.auth?.uid;
-    if (!uid) {
+    if(!uid) {
       throw new HttpsError(
         "unauthenticated",
-        "Usuário não autenticado.");
+        "Usuário não autenticado."
+      );
     }
-    const data = request.data;
-    const {estagio} = data;
+    const {estagio} = request.data;
     const startups = await buscarStartupPorEstagio(estagio);
     return {startups};
   }
