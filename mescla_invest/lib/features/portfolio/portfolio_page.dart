@@ -22,6 +22,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   Map<String, dynamic> _resumo = {};
   List<Map<String, dynamic>> _itens = [];
   bool _carregando = true;
+  List<dynamic> _pontos = [];
 
   @override
   void initState() {
@@ -34,6 +35,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
       final callable = _functions.httpsCallable('getPortfolio');
       final result = await callable.call();
 
+      //Buscar historico
+      final historicoCallable = _functions.httpsCallable('getHistoricoSaldo');
+      final historicoresult = await historicoCallable.call();
+      final pontos = historicoresult.data['pontos'] as List<dynamic>? ?? [];
+
       if (mounted) {
         setState(() {
           _resumo = Map<String, dynamic>.from(result.data['resumo'] ?? {});
@@ -42,6 +48,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
               (e) => Map<String, dynamic>.from(e),
             ),
           );
+          _pontos = pontos;
           _carregando = false;
         });
       }
@@ -401,82 +408,70 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _buildChart() {
-    final data = _getChartData(_filtro);
-    final market = _getMarketData(_filtro);
+    if (_pontos.length < 2) {
+      return const Center(
+        child: Text(
+          'Faça depósitos ou saques para ver o gráfico.',
+          style: TextStyle(color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    final spots = List.generate(
+      _pontos.length,
+      (i) => FlSpot(
+        i.toDouble(),
+        (_pontos[i]['saldo'] as num).toDouble(),
+      )
+    );
+
+    final maxY = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b) * 1.2;
 
     return LineChart(
       duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOut,
       LineChartData(
         minY: 0,
-        maxY: 12,
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: 2,
-        ),
+        maxY: maxY,
+        gridData: FlGridData(show: true, drawVerticalLine: false),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
           topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 30,
               getTitlesWidget: (value, meta) {
-                final labels = _bottomLabels();
-                if (value.toInt() >= labels.length) {
-                  return const SizedBox();
-                }
+                final index = value.toInt();
+                if (index < 0 || index >= _pontos.length) return const SizedBox();
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    labels[value.toInt()],
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    _pontos[index]['label'],
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
                   ),
                 );
               },
             ),
           ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              interval: 2,
-              reservedSize: 42,
-              getTitlesWidget: (value, meta) => Text(
-                'R\$ ${value.toInt()}k',
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
-              ),
-            ),
-          ),
         ),
         lineBarsData: [
           LineChartBarData(
-            spots: List.generate(
-              data.length,
-              (i) => FlSpot(i.toDouble(), data[i]),
-            ),
+            spots: spots,
             isCurved: true,
             color: Colors.blue,
             barWidth: 4,
             dotData: FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              color: Colors.blue.withOpacity(0.15),
-            ),
-          ),
-          LineChartBarData(
-            spots: List.generate(
-              market.length,
-              (i) => FlSpot(i.toDouble(), market[i]),
-            ),
-            isCurved: true,
-            color: Colors.grey,
-            barWidth: 3,
-            dotData: FlDotData(show: false),
-          ),
-        ],
-      ),
+              color: Colors.blue.withOpacity(0.15)
+            )
+          )
+        ]
+      )
     );
   }
 
@@ -495,50 +490,6 @@ class _PortfolioPageState extends State<PortfolioPage> {
     }
   }
 
-  List<String> _bottomLabels() {
-    switch (_filtro) {
-      case TimeFilter.daily:
-        return ['09h', '11h', '13h', '15h', '18h'];
-      case TimeFilter.weekly:
-        return ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
-      case TimeFilter.monthly:
-        return ['S1', 'S2', 'S3', 'S4'];
-      case TimeFilter.sixMonths:
-        return ['Jan', 'Fev', 'Mar', 'Abr', 'Mai'];
-      case TimeFilter.ytd:
-        return ['Jan', 'Mar', 'Mai', 'Jul', 'Set'];
-    }
-  }
-
-  List<double> _getChartData(TimeFilter f) {
-    switch (f) {
-      case TimeFilter.daily:
-        return [9.8, 9.9, 10.0, 10.1, 10.25];
-      case TimeFilter.weekly:
-        return [9.5, 9.8, 9.7, 10.0, 10.25];
-      case TimeFilter.monthly:
-        return [8.5, 9.0, 9.8, 10.25];
-      case TimeFilter.sixMonths:
-        return [7.0, 7.8, 8.5, 9.0, 10.25];
-      case TimeFilter.ytd:
-        return [6.0, 7.0, 8.0, 9.5, 10.25];
-    }
-  }
-
-  List<double> _getMarketData(TimeFilter f) {
-    switch (f) {
-      case TimeFilter.daily:
-        return [9.5, 9.7, 9.8, 9.9, 10.0];
-      case TimeFilter.weekly:
-        return [9.2, 9.4, 9.5, 9.7, 9.9];
-      case TimeFilter.monthly:
-        return [8.0, 8.4, 8.8, 9.2];
-      case TimeFilter.sixMonths:
-        return [6.5, 7.0, 7.5, 8.0, 9.0];
-      case TimeFilter.ytd:
-        return [5.5, 6.5, 7.2, 8.5, 9.3];
-    }
-  }
 
   static String _formatarReal(num valor) {
     final texto = valor.toStringAsFixed(2);
