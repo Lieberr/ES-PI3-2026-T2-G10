@@ -1,3 +1,5 @@
+// Feito por Gustavo Lieb RA: 24023376
+//carteira digital e historico de transacoes feito por Yuri Soares da Silva RA: 25008703
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
