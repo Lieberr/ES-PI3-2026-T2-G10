@@ -49,6 +49,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+
+
   // ─── Streams ─────────────────────────────────────────────────────────────
 
   Stream<Map<String, double>> _carteiraStream() {
