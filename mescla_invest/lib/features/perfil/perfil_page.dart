@@ -6,6 +6,8 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -452,11 +454,55 @@ class _ProfilePageState extends State<ProfilePage> {
   // ─── IMAGEM ───────────────────────────────────────────────────────────────
 
   Future<void> pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() => _profileImage = File(image.path));
+  final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+  if (image == null) return;
+
+  try {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final ref = FirebaseStorage.instance.ref().child('fotoPerfil/$uid.jpg');
+
+    if (kIsWeb) {
+      // Web: usa bytes em vez de File
+      final bytes = await image.readAsBytes();
+      await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+    } else {
+      // Mobile: usa File normalmente
+      final file = File(image.path);
+      setState(() => _profileImage = file); // preview local só no mobile
+      await ref.putFile(file);
+    }
+
+    final url = await ref.getDownloadURL();
+
+    await FirebaseAuth.instance.currentUser!.updatePhotoURL(url);
+    await FirebaseAuth.instance.currentUser!.reload();
+    if (mounted) setState(() {});
+
+    await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .set({'fotoUrl': url}, SetOptions(merge: true));
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto atualizada com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  } catch (e) {
+    debugPrint('Erro ao salvar foto: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erro ao salvar foto.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+}
 
   // ─── BUILD ────────────────────────────────────────────────────────────────
 
@@ -494,18 +540,15 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: [
                           CircleAvatar(
                             radius: 55,
-                            backgroundColor: const Color(
-                              0xff2453ff,
-                            ).withOpacity(0.15),
-                            backgroundImage: _profileImage != null
-                                ? FileImage(_profileImage!)
-                                : null,
-                            child: _profileImage == null
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: Color(0xff2453ff),
-                                  )
+                            backgroundColor: const Color(0xff2453ff).withOpacity(0.15),
+                            backgroundImage: FirebaseAuth.instance.currentUser?.photoURL != null
+                                ? NetworkImage(FirebaseAuth.instance.currentUser!.photoURL!)
+                                : (!kIsWeb && _profileImage != null
+                                    ? FileImage(_profileImage!)
+                                    : null) as ImageProvider?,
+                            child: FirebaseAuth.instance.currentUser?.photoURL == null &&
+                                    (kIsWeb || _profileImage == null)
+                                ? const Icon(Icons.person, size: 60, color: Color(0xff2453ff))
                                 : null,
                           ),
                           Positioned(
