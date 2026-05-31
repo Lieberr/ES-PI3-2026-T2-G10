@@ -5,4 +5,4 @@ export {
   enviarPerguntaPrivada,
   getPerguntasPrivadasDaStartup,
 } from "./handlers/perguntaHandlers";
- 
+

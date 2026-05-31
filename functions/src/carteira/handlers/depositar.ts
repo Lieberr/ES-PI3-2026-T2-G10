@@ -10,26 +10,26 @@ import {Timestamp} from "firebase-admin/firestore";
 export const depositar = onCall(
   async (request:CallableRequest<AtualizarSaldoInput>) => {
     const data = request.data;
-    if(data.valor < 0) {
+    if (data.valor < 0) {
       throw new HttpsError(
         "invalid-argument",
         "o valor inserido é invalido."
       );
     }
-    
+
     const {valor} = data;
     const uid = request.auth?.uid;
-    if(!uid) {
+    if (!uid) {
       throw new HttpsError(
         "unauthenticated",
-      "Usuário não autenticado."
+        "Usuário não autenticado."
       );
     }
 
     const carteira = await buscarCarteira(uid);
-    if(!carteira) {
+    if (!carteira) {
       throw new HttpsError(
-        "not-found", 
+        "not-found",
         "Carteira não encontrada."
       );
     }

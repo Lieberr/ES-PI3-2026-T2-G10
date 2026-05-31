@@ -32,10 +32,16 @@ async function buscarNomeUsuario(uid: string): Promise<string> {
  */
 function validarInput(startupId: string, texto: string): void {
   if (!startupId?.trim()) {
-    throw new HttpsError("invalid-argument", "O campo startupId é obrigatório.");
+    throw new HttpsError(
+      "invalid-argument",
+      "O campo startupId é obrigatório."
+    );
   }
   if (!texto?.trim()) {
-    throw new HttpsError("invalid-argument", "A pergunta não pode ser vazia.");
+    throw new HttpsError(
+      "invalid-argument",
+      "A pergunta não pode ser vazia."
+    );
   }
   if (texto.trim().length > 500) {
     throw new HttpsError(
@@ -55,7 +61,12 @@ function validarInput(startupId: string, texto: string): void {
 export const enviarPergunta = onCall(
   async (request: CallableRequest<CriarPerguntaInput>) => {
     const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError("unauthenticated", "Usuário não autenticado.");
+    if (!uid) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Usuário não autenticado."
+      );
+    }
 
     const {startupId, texto} = request.data;
     validarInput(startupId, texto);
@@ -84,11 +95,19 @@ export const enviarPergunta = onCall(
 export const getPerguntasDaStartup = onCall(
   async (request: CallableRequest<{startupId: string}>) => {
     const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError("unauthenticated", "Usuário não autenticado.");
+    if (!uid) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Usuário não autenticado."
+      );
+    }
 
     const {startupId} = request.data;
     if (!startupId?.trim()) {
-      throw new HttpsError("invalid-argument", "O campo startupId é obrigatório.");
+      throw new HttpsError(
+        "invalid-argument",
+        "O campo startupId é obrigatório."
+      );
     }
 
     const perguntas = await buscarPerguntasPublicas(startupId.trim());
@@ -100,13 +119,18 @@ export const getPerguntasDaStartup = onCall(
 // Perguntas Privadas (somente investidores)
 
 
- //Somente usuários que possuem tokens da startup podem
- //enviar uma pergunta privada.
+// Somente usuários que possuem tokens da startup podem
+// enviar uma pergunta privada.
 
 export const enviarPerguntaPrivada = onCall(
   async (request: CallableRequest<CriarPerguntaInput>) => {
     const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError("unauthenticated", "Usuário não autenticado.");
+    if (!uid) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Usuário não autenticado."
+      );
+    }
 
     const {startupId, texto} = request.data;
     validarInput(startupId, texto);
@@ -129,7 +153,7 @@ export const enviarPerguntaPrivada = onCall(
       resposta: null,
       respondidoEm: null,
       criadoEm: Timestamp.now(),
-      publica: false,  // ← marca como privada
+      publica: false, // ← marca como privada
     });
 
     return {mensagem: "Pergunta privada enviada com sucesso."};
@@ -143,11 +167,19 @@ export const enviarPerguntaPrivada = onCall(
 export const getPerguntasPrivadasDaStartup = onCall(
   async (request: CallableRequest<{startupId: string}>) => {
     const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError("unauthenticated", "Usuário não autenticado.");
+    if (!uid) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Usuário não autenticado."
+      );
+    }
 
     const {startupId} = request.data;
     if (!startupId?.trim()) {
-      throw new HttpsError("invalid-argument", "O campo startupId é obrigatório.");
+      throw new HttpsError(
+        "invalid-argument",
+        "O campo startupId é obrigatório."
+      );
     }
 
     const ehInvestidor = await usuarioEhInvestidor(uid, startupId.trim());

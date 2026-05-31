@@ -1,7 +1,7 @@
 // Feito por: Matheus Henrique Portugal Narducci RA: 2500896
 
 import {Timestamp} from "firebase-admin/firestore";
- 
+
 export interface Pergunta {
   id: string;
   startupId: string;
@@ -13,9 +13,9 @@ export interface Pergunta {
   criadoEm: Timestamp;
   publica: boolean; // true = visível a todos | false = só investidores
 }
- 
+
 export interface CriarPerguntaInput {
   startupId: string;
   texto: string;
 }
- 
+
