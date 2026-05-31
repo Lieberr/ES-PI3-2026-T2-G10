@@ -13,19 +13,21 @@ export interface TransacaoPrimaria {
 }
 
 export interface TransacaoSecundaria {
-  uidComprador: string;
-  uidVendedor: string;
+  uidComprador: string | null;
+  uidVendedor: string | null;
   startupId: string;
   quantidade: number;
   valorUnitario: number;
   valorTotal: number;
-  data: Timestamp;
+  tipo: "compra" | "venda";
   status: "aberta" | "fechada" | "cancelada";
+  criadaEm: Timestamp;
+  resolvidaEm: Timestamp | null;
 }
 
 export interface TokenUsuario {
   startupId: string;
   quantidade: number;
-  precoMedio: number;
+  quantidadeReservada: number;
   valorInvestido: number;
 }

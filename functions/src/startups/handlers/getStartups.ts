@@ -2,6 +2,8 @@
 
 import {CallableRequest, HttpsError, onCall} from
   "firebase-functions/v2/https";
+import {buscarTokenUsuario}
+  from "../../carteira/repositories/carteiraRepository";
 import {buscarStartupPorEstagio, buscarStartups, buscarStartupsPorId}
   from "../repositories/startupRepository";
 
@@ -29,11 +31,29 @@ export const getStartupById = onCall(
     }
     const data = request.data;
     const {id} = data;
-    const startup = await buscarStartupsPorId(id);
+    if (!id) {
+      throw new HttpsError(
+        "invalid-argument",
+        "ID da startup é obrigatório."
+      );
+    }
+    const [startup, tokens] = await Promise.all([
+      buscarStartupsPorId(id),
+      buscarTokenUsuario(uid),
+    ]);
+
     if (!startup) {
       throw new HttpsError("not-found", "Startup não encontrada.");
     }
-    return {startup};
+    const tokenDaStartup = tokens?.find((t) => t.startupId === id);
+    const isInvestor = (tokenDaStartup?.quantidade ?? 0) > 0;
+    return {
+      startup,
+      isInvestor,
+      canTradeTokens: true,
+      canAccessBalcao: isInvestor,
+      canSendPrivateQuestion: isInvestor,
+    };
   }
 );
 
