@@ -11,12 +11,12 @@ import {
 } from "../repositories/perguntaRepository";
 import {db} from "../../shared/firebase";
 
-// ─────────────────────────────────────────────
+
 // Helpers
-// ─────────────────────────────────────────────
+
 
 /**
- * Busca o nome do usuário no Firestore.
+ // Busca o nome do usuário no Firestore.
  * @param {string} uid
  * @return {Promise<string>}
  */
@@ -26,7 +26,7 @@ async function buscarNomeUsuario(uid: string): Promise<string> {
 }
 
 /**
- * Valida os campos comuns de envio de pergunta.
+ // Valida os campos comuns de envio de pergunta.
  * @param {string} startupId
  * @param {string} texto
  */
@@ -45,9 +45,9 @@ function validarInput(startupId: string, texto: string): void {
   }
 }
 
-// ─────────────────────────────────────────────
+
 // Perguntas Públicas
-// ─────────────────────────────────────────────
+
 
 /**
  * Qualquer usuário autenticado pode enviar uma pergunta pública.
@@ -96,14 +96,13 @@ export const getPerguntasDaStartup = onCall(
   }
 );
 
-// ─────────────────────────────────────────────
-// Perguntas Privadas (somente investidores)
-// ─────────────────────────────────────────────
 
-/**
- * Somente usuários que possuem tokens da startup podem
- * enviar uma pergunta privada.
- */
+// Perguntas Privadas (somente investidores)
+
+
+ //Somente usuários que possuem tokens da startup podem
+ //enviar uma pergunta privada.
+
 export const enviarPerguntaPrivada = onCall(
   async (request: CallableRequest<CriarPerguntaInput>) => {
     const uid = request.auth?.uid;
