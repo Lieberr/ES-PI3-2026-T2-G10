@@ -1,4 +1,5 @@
 // Feito por Leonardo Dionel RA: 25010092
+// Feito por Gustavo Lieb Ra: 24023376
 
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -28,6 +29,41 @@ class _PortfolioPageState extends State<PortfolioPage> {
   void initState() {
     super.initState();
     carregarPortfolio();
+  }
+
+
+
+  List<dynamic> get _pontosDoFiltro {
+    if (_pontos.isEmpty) return [];
+
+    final agora = DateTime.now();
+    DateTime inicio;
+
+    switch (_filtro) {
+      case TimeFilter.daily:
+        inicio = DateTime(agora.year, agora.month, agora.day);
+        break;
+      case TimeFilter.weekly:
+        inicio = agora.subtract(const Duration(days: 7));
+        break;
+      case TimeFilter.monthly:
+        inicio = DateTime(agora.year, agora.month - 1, agora.day);
+        break;
+      case TimeFilter.sixMonths:
+        inicio = DateTime(agora.year, agora.month - 6, agora.day);
+        break;
+      case TimeFilter.ytd:
+        inicio = DateTime(agora.year, 1, 1);
+        break;
+    }
+
+     return _pontos.where((p) {
+    final partes = (p['label'] as String).split('/');
+    final dia = int.tryParse(partes[0]) ?? 0;
+    final mes = int.tryParse(partes[1]) ?? 0;
+    final data = DateTime(agora.year, mes, dia);
+    return data.isAfter(inicio) || data.isAtSameMomentAs(inicio);
+  }).toList();
   }
 
   Future<void> carregarPortfolio() async {
@@ -408,7 +444,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _buildChart() {
-    if (_pontos.length < 2) {
+    final pontosDoFiltro = _pontosDoFiltro;
+
+    if (pontosDoFiltro.length < 2) {
       return const Center(
         child: Text(
           'Faça depósitos ou saques para ver o gráfico.',
@@ -418,11 +456,14 @@ class _PortfolioPageState extends State<PortfolioPage> {
       );
     }
 
+    final labels = _labelsEixoX();
+    final totalLabels = labels.length;
+
     final spots = List.generate(
-      _pontos.length,
+      pontosDoFiltro.length,
       (i) => FlSpot(
-        i.toDouble(),
-        (_pontos[i]['saldo'] as num).toDouble(),
+        (i / (pontosDoFiltro.length - 1)) * (totalLabels - 1),
+        (pontosDoFiltro[i]['saldo'] as num).toDouble(),
       )
     );
 
@@ -439,18 +480,43 @@ class _PortfolioPageState extends State<PortfolioPage> {
         titlesData: FlTitlesData(
           topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 50,
+              interval: _calcularIntevalor(maxY),
+              getTitlesWidget: (value, meta) {
+                if(value == meta.max) return const SizedBox();
+                
+                String label;
+                if (value >= 1000) {
+                  final k = value / 1000;
+                  label = k == k.roundToDouble() ? '${k.toInt()}k' : '${k.toStringAsFixed(1)}k';
+                } else {
+                  label = 'R\$ ${value.toInt()}';
+                }
+                return Text(
+                  label,
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                );
+              }
+            )
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 30,
+              interval: 1,
               getTitlesWidget: (value, meta) {
+
+                final labels = _labelsEixoX();
                 final index = value.toInt();
-                if (index < 0 || index >= _pontos.length) return const SizedBox();
+
+                if (index < 0 || index >= labels.length) return const SizedBox();
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    _pontos[index]['label'],
+                    labels[index],
                     style: const TextStyle(fontSize: 10, color: Colors.grey),
                   ),
                 );
@@ -499,5 +565,41 @@ class _PortfolioPageState extends State<PortfolioPage> {
       '.',
     );
     return '$formatada,${partes[1]}';
+  }
+
+  List<String> _labelsEixoX() {
+    switch(_filtro) {
+      case TimeFilter.daily:
+        return ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
+      case TimeFilter.weekly:
+        return ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
+      case TimeFilter.monthly:
+        return ['S1', 'S2', 'S3', 'S4'];
+      case TimeFilter.sixMonths:
+        final agora = DateTime.now();
+        return List.generate(6, (i) {
+          final mes = DateTime(agora.year, agora.month - 5 + i);
+          const nomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+          return nomes[mes.month - 1];
+        });
+      case TimeFilter.ytd:
+        final agora = DateTime.now();
+        return List.generate(agora.month, (i) {
+          const nomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+          return nomes[i];
+        });
+    }
+  }
+
+  double _calcularIntevalor(double maxY) {
+  if (maxY <= 50) return 10;
+  if (maxY <= 100) return 20;
+  if (maxY <= 500) return 100;
+  if (maxY <= 1000) return 200;
+  if (maxY <= 2000) return 500;
+  if (maxY <= 5000) return 1000;
+  if (maxY <= 10000) return 2000;
+  if (maxY <= 50000) return 10000;
+  return 20000;
   }
 }
