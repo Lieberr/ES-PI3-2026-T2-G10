@@ -1,43 +1,38 @@
 // Feito por Leonardo Dionel RA: 25010092
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import * as admin from "firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 
-import {onCall, CallableRequest, HttpsError} from "firebase-functions/v2/https";
-import {
-  atualizarSaldo,
-  buscarCarteira,
-  registrarOperacao,
-} from "../repositories/carteiraRepository";
-import {AtualizarSaldoInput} from "../types/carteira";
-import {Timestamp} from "firebase-admin/firestore";
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
+export const depositar = onCall(async (request) => {
+  const { valor } = request.data;
 
-export const depositar = onCall(
-  async (request: CallableRequest<AtualizarSaldoInput>) => {
-    const data = request.data;
-    if (data.valor < 0) {
-      throw new HttpsError(
-        "invalid-argument",
-        "O valor inserido é invalido"
-      );
-    }
-    const {valor} = data;
-    const uid = request.auth?.uid;
-    if (!uid) {
-      throw new HttpsError("unauthenticated", "Usuário não autenticado.");
-    }
-    const carteira = await buscarCarteira(uid);
-    if (!carteira) {
-      throw new HttpsError("not-found", "Carteira não encontrada.");
-    }
-    const novoSaldo = carteira.saldo + valor;
-
-    await atualizarSaldo(uid, novoSaldo);
-
-    await registrarOperacao({
-      uid,
-      tipo: "deposito",
-      valor,
-      realizadoEm: Timestamp.now(),
-    });
-    return {mensagem: "Deposito realizado com sucesso."};
+  if (typeof valor !== "number" || valor <= 0) {
+    throw new HttpsError("invalid-argument", "Valor inválido.");
   }
-);
+
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Usuário não autenticado.");
+  }
+
+  const carteiraRef = admin.firestore().collection("carteiras").doc(uid);
+
+  // 1. Atualiza saldo corretamente (atômico)
+  await carteiraRef.update({
+    saldo: admin.firestore.FieldValue.increment(valor),
+  });
+
+  // 2. Registra histórico (IMPORTANTE pro Flutter)
+  await carteiraRef.collection("movimentacoes").add({
+    tipo: "deposito",
+    valor: valor,
+    realizadoEm: Timestamp.now(),
+    descricao: "Depósito via app",
+  });
+
+  return { mensagem: "Depósito realizado com sucesso." };
+});
