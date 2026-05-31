@@ -9,25 +9,26 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
- class _HomePageState extends State<HomePage> {
-
+class _HomePageState extends State<HomePage> {
   String filtroSelecionado = 'todos';
 
   final List<Map<String, dynamic>> startups = [
     {
-      'image': 'https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?q=80&w=400',
-            'title': 'EcoTech Solutions',
-            'status': 'Em operação',
-            'description': 'Plataforma de gestão sustentável para empresas',
-            'tokenValue': 'R\$ 10.50',
-            'capital': 'R\$ 250k',
-            'tokens': '45 000 tokens disponíveis',
-            'progress': 0.58,
-            'variation': '+ 2.5%',
-            'positive': true
+      'image':
+          'https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?q=80&w=400',
+      'title': 'EcoTech Solutions',
+      'status': 'Em operação',
+      'description': 'Plataforma de gestão sustentável para empresas',
+      'tokenValue': 'R\$ 10.50',
+      'capital': 'R\$ 250k',
+      'tokens': '45 000 tokens disponíveis',
+      'progress': 0.58,
+      'variation': '+ 2.5%',
+      'positive': true,
     },
     {
-       'image': 'https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=400',
+      'image':
+          'https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=400',
       'title': 'HealthAI',
       'status': 'Em expansão',
       'description': 'Inteligência artificial para diagnósticos médicos',
@@ -36,10 +37,11 @@ class HomePage extends StatefulWidget {
       'tokens': '12 000 tokens disponíveis',
       'progress': 0.82,
       'variation': '+ 5.2%',
-      'positive': true
+      'positive': true,
     },
     {
-       'image': 'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=400',
+      'image':
+          'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=400',
       'title': 'EduTech Brasil',
       'status': 'Nova',
       'description': 'Plataforma de educação personalizada com IA',
@@ -48,16 +50,14 @@ class HomePage extends StatefulWidget {
       'tokens': '35 000 tokens disponíveis',
       'progress': 0.47,
       'variation': '- 1.2%',
-      'positive': false
+      'positive': false,
     },
   ];
 
-  List <Map<String, dynamic>> get startupsFiltradas {
+  List<Map<String, dynamic>> get startupsFiltradas {
     if (filtroSelecionado == 'todos') return startups;
 
-    return startups
-          .where((s) => s['status'] == filtroSelecionado)
-          .toList();
+    return startups.where((s) => s['status'] == filtroSelecionado).toList();
   }
 
   @override
@@ -68,24 +68,18 @@ class HomePage extends StatefulWidget {
       child: SafeArea(
         child: Column(
           children: [
-
             // HEADER
             Container(
               height: 70,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Color(0xFFE5E5E5),
-                  ),
-                ),
+                border: Border(bottom: BorderSide(color: Color(0xFFE5E5E5))),
               ),
 
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-
                   const Text(
                     'Startups',
                     style: TextStyle(
@@ -109,11 +103,7 @@ class HomePage extends StatefulWidget {
                     },
 
                     itemBuilder: (context) => [
-
-                      const PopupMenuItem(
-                        value: 'todos',
-                        child: Text('Todos'),
-                      ),
+                      const PopupMenuItem(value: 'todos', child: Text('Todos')),
 
                       const PopupMenuItem(
                         value: 'Nova',
@@ -128,11 +118,9 @@ class HomePage extends StatefulWidget {
                       const PopupMenuItem(
                         value: 'Em expansão',
                         child: Text('Em expansão'),
-                      )
+                      ),
                     ],
-
-
-                  )
+                  ),
                 ],
               ),
             ),
@@ -145,41 +133,35 @@ class HomePage extends StatefulWidget {
                   vertical: 14,
                 ),
 
-
-
                 children: startupsFiltradas.map((s) {
                   return Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.only(bottom: 14),
 
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => StartupDetailsPage(
-                                startup: s,
-                              ),
-                            ),
-                          );
-                        },
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => StartupDetailsPage(startup: s),
+                          ),
+                        );
+                      },
 
-                        child: StartupCard(
-                          image: s['image'],
-                          title: s['title'],
-                          status: s['status'],
-                          description: s['description'],
-                          tokenValue: s['tokenValue'],
-                          capital: s['capital'],
-                          tokens: s['tokens'],
-                          progress: s['progress'],
-                          variation: s['variation'],
-                          positive: s['positive'],
-                        ),
+                      child: StartupCard(
+                        image: s['image'],
+                        title: s['title'],
+                        status: s['status'],
+                        description: s['description'],
+                        tokenValue: s['tokenValue'],
+                        capital: s['capital'],
+                        tokens: s['tokens'],
+                        progress: s['progress'],
+                        variation: s['variation'],
+                        positive: s['positive'],
                       ),
-                    );
+                    ),
+                  );
                 }).toList(),
-
-
               ),
             ),
           ],
@@ -188,5 +170,3 @@ class HomePage extends StatefulWidget {
     );
   }
 }
-
-
