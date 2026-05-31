@@ -32,10 +32,16 @@ async function buscarNomeUsuario(uid: string): Promise<string> {
  */
 function validarInput(startupId: string, texto: string): void {
   if (!startupId?.trim()) {
-    throw new HttpsError("invalid-argument", "O campo startupId é obrigatório.");
+    throw new HttpsError(
+      "invalid-argument",
+      "O campo startupId é obrigatório."
+    );
   }
   if (!texto?.trim()) {
-    throw new HttpsError("invalid-argument", "A pergunta não pode ser vazia.");
+    throw new HttpsError(
+      "invalid-argument",
+      "A pergunta não pode ser vazia."
+    );
   }
   if (texto.trim().length > 500) {
     throw new HttpsError(
@@ -107,7 +113,10 @@ export const listarPerguntas = onCall(
  
     const {startupId} = request.data;
     if (!startupId?.trim()) {
-      throw new HttpsError("invalid-argument", "O campo startupId é obrigatório.");
+      throw new HttpsError(
+        "invalid-argument",
+        "O campo startupId é obrigatório."
+      );
     }
  
     // Sempre carrega as públicas

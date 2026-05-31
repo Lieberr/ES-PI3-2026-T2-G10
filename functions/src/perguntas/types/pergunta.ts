@@ -15,10 +15,10 @@ export interface Pergunta {
   criadoEm: Timestamp;
   visibilidade: Visibilidade;
 }
- 
+
 export interface CriarPerguntaInput {
   startupId: string;
   texto: string;
   visibilidade: Visibilidade;
 }
- 
+
