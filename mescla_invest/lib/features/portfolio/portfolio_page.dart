@@ -15,15 +15,13 @@ class PortfolioPage extends StatefulWidget {
 }
 
 class _PortfolioPageState extends State<PortfolioPage> {
-  final _functions = FirebaseFunctions.instanceFor(
-    region: 'southamerica-east1',
-  );
+  final _functions = FirebaseFunctions.instanceFor(region: 'southamerica-east1');
 
   TimeFilter _filtro = TimeFilter.monthly;
   Map<String, dynamic> _resumo = {};
   List<Map<String, dynamic>> _itens = [];
   bool _carregando = true;
-  List<dynamic> _pontos = [];
+  List<Map<String, dynamic>> _historico = [];  // <-- substituiu _pontosPortfolio
 
   @override
   void initState() {
@@ -31,79 +29,91 @@ class _PortfolioPageState extends State<PortfolioPage> {
     carregarPortfolio();
   }
 
-
-
-  List<dynamic> get _pontosDoFiltro {
-    if (_pontos.isEmpty) return [];
+  // Filtra _historico pelo período selecionado
+  List<Map<String, dynamic>> get _pontosDoFiltro {
+    if (_historico.isEmpty) return [];
 
     final agora = DateTime.now();
     DateTime inicio;
 
     switch (_filtro) {
       case TimeFilter.daily:
-        inicio = DateTime(agora.year, agora.month, agora.day);
+        inicio = agora.subtract(const Duration(days: 1));
         break;
       case TimeFilter.weekly:
         inicio = agora.subtract(const Duration(days: 7));
         break;
       case TimeFilter.monthly:
-        inicio = DateTime(agora.year, agora.month - 1, agora.day);
+        inicio = agora.subtract(const Duration(days: 30));
         break;
       case TimeFilter.sixMonths:
-        inicio = DateTime(agora.year, agora.month - 6, agora.day);
+        inicio = agora.subtract(const Duration(days: 180));
         break;
       case TimeFilter.ytd:
         inicio = DateTime(agora.year, 1, 1);
         break;
     }
 
-     final filtrados = _pontos.where((p) {
-      final partes = (p['label'] as String).split(' ');
-      final dateParts = partes[0].split('/');
-      final dia = int.tryParse(dateParts[0]) ?? 0;
-      final mes = int.tryParse(dateParts[1]) ?? 0;
-      final ano = int.tryParse(dateParts[2]) ?? agora.year;
-      final timeParts = partes.length > 1 ? partes[1].split(':') : ['0', '0'];
-      final hora = int.tryParse(timeParts[0]) ?? 0;
-      final minuto = int.tryParse(timeParts[1]) ?? 0;
-      final data = DateTime(ano, mes, dia, hora, minuto);
-      return data.isAfter(inicio) || data.isAtSameMomentAs(inicio);
-}).toList();
-
-if(filtrados.isEmpty || filtrados.first != _pontos.first) {
-  return [
-    {'label': '${inicio.day}/${inicio.month}/${inicio.year} 00:00', 'saldo': 0},
-    ...filtrados,
-  ];
-}
-  return filtrados;
-
+    return _historico.where((p) {
+      final data = DateTime.tryParse(p['data'] ?? '');
+      return data != null && data.isAfter(inicio);
+    }).toList();
   }
 
   Future<void> carregarPortfolio() async {
     try {
+      // 1. Busca resumo e itens do portfólio
       final callable = _functions.httpsCallable('getPortfolio');
       final result = await callable.call();
 
-      //Buscar historico
-      final historicoCallable = _functions.httpsCallable('getHistoricoSaldo');
-      final historicoresult = await historicoCallable.call();
-      final pontos = historicoresult.data['pontos'] as List<dynamic>? ?? [];
+      final itens = List<Map<String, dynamic>>.from(
+        (result.data['itens'] ?? []).map((e) => Map<String, dynamic>.from(e)),
+      );
+
+      // 2. Para cada startup, busca o histórico e agrega
+      final historicoAgregado = <String, Map<String, dynamic>>{};
+
+      for (final item in itens) {
+        final startupId = item['startupId'] as String? ?? '';
+        if (startupId.isEmpty) continue;
+
+        final res = await _functions
+            .httpsCallable('getHistoricoToken')
+            .call({'startupId': startupId});
+
+        final historico = List<Map<String, dynamic>>.from(
+          (res.data['historicoGrafico'] ?? []).map((e) => Map<String, dynamic>.from(e)),
+        );
+        final quantidade = (item['quantidade'] as num?)?.toDouble() ?? 0;
+
+        for (final ponto in historico) {
+          final data = ponto['data'] as String? ?? '';
+          final valorToken = (ponto['valorToken'] as num?)?.toDouble() ?? 0;
+          final contribuicao = valorToken * quantidade;
+
+          if (historicoAgregado.containsKey(data)) {
+            historicoAgregado[data]!['valorTotal'] =
+                (historicoAgregado[data]!['valorTotal'] as double) + contribuicao;
+          } else {
+            historicoAgregado[data] = {'data': data, 'valorTotal': contribuicao};
+          }
+        }
+      }
+
+      // Ordena por data ISO (funciona direto com compareTo)
+      final historicoOrdenado = historicoAgregado.values.toList()
+        ..sort((a, b) => (a['data'] as String).compareTo(b['data'] as String));
 
       if (mounted) {
         setState(() {
           _resumo = Map<String, dynamic>.from(result.data['resumo'] ?? {});
-          _itens = List<Map<String, dynamic>>.from(
-            (result.data['itens'] ?? []).map(
-              (e) => Map<String, dynamic>.from(e),
-            ),
-          );
-          _pontos = pontos;
+          _itens = itens;
+          _historico = historicoOrdenado;  // <-- salva aqui
           _carregando = false;
         });
       }
     } on FirebaseFunctionsException catch (e) {
-      debugPrint('ERRO getPortfolio: ${e.code} | ${e.message}');
+      debugPrint('ERRO: ${e.code} | ${e.message}');
       if (mounted) setState(() => _carregando = false);
     } catch (e) {
       debugPrint('ERRO GENERICO: $e');
@@ -150,24 +160,18 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Valor Total do Portfólio',
-                            style: TextStyle(color: Colors.black54),
-                          ),
+                          const Text('Valor Total do Portfólio',
+                              style: TextStyle(color: Colors.black54)),
                           const SizedBox(height: 8),
                           Text(
                             'R\$ ${_formatarReal(totalAtual)}',
                             style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
+                                fontSize: 32, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: positivo
                                   ? Colors.green.withOpacity(0.1)
@@ -210,8 +214,7 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
 
                     const SizedBox(height: 20),
 
-                    // GRÁFICO — filtros visuais, dados mockados por período
-                    // (substitua por getHistoricoToken quando integrar)
+                    // GRÁFICO
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -223,11 +226,9 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Distribuição do Portfólio',
+                            'Evolução do Portfólio',
                             style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 20),
                           Row(
@@ -238,9 +239,7 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
                                 onTap: () => setState(() => _filtro = f),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
+                                      horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: sel
                                         ? Colors.blue
@@ -250,7 +249,8 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
                                   child: Text(
                                     _filtroLabel(f),
                                     style: TextStyle(
-                                      color: sel ? Colors.white : Colors.black,
+                                      color:
+                                          sel ? Colors.white : Colors.black,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
@@ -282,17 +282,12 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
 
                     const SizedBox(height: 20),
 
-                    // LISTA DE INVESTIMENTOS REAIS
+                    // LISTA DE INVESTIMENTOS
                     const Text(
                       'Meus Investimentos',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-
                     const SizedBox(height: 10),
-
                     if (_itens.isEmpty)
                       const Center(
                         child: Padding(
@@ -309,6 +304,83 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildChart() {
+    final pontos = _pontosDoFiltro;
+
+    if (pontos.length < 2) {
+      return const Center(
+        child: Text(
+          'Compre token para ver a valorização do seu portfólio',
+          style: TextStyle(color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    final valores = pontos
+        .map((p) => (p['valorTotal'] as num?)?.toDouble() ?? 0)
+        .toList();
+
+    final minY = valores.reduce((a, b) => a < b ? a : b) * 0.95;
+    final maxY = valores.reduce((a, b) => a > b ? a : b) * 1.05;
+
+    return LineChart(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+      LineChartData(
+        minY: minY,
+        maxY: maxY,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: (maxY - minY) / 3,
+        ),
+        borderData: FlBorderData(show: false),
+        titlesData: FlTitlesData(
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 50,
+              getTitlesWidget: (value, meta) {
+                if (value == meta.max) return const SizedBox();
+                String label;
+                if (value >= 1000) {
+                  final k = value / 1000;
+                  label = k == k.roundToDouble()
+                      ? '${k.toInt()}k'
+                      : '${k.toStringAsFixed(1)}k';
+                } else {
+                  label = 'R\$ ${value.toInt()}';
+                }
+                return Text(label,
+                    style: const TextStyle(fontSize: 10, color: Colors.grey));
+              },
+            ),
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: List.generate(
+              valores.length,
+              (i) => FlSpot(i.toDouble(), valores[i]),
+            ),
+            isCurved: true,
+            color: Colors.blue,
+            barWidth: 4,
+            dotData: FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: Colors.blue.withOpacity(0.15),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -336,18 +408,12 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                nome,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text(nome,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: positivo
                       ? Colors.green.withOpacity(0.1)
@@ -366,10 +432,8 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            '$quantidade tokens',
-            style: const TextStyle(color: Colors.grey),
-          ),
+          Text('$quantidade tokens',
+              style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -384,10 +448,8 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Investido: R\$ ${_formatarReal(valorInvestido)}',
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
+              Text('Investido: R\$ ${_formatarReal(valorInvestido)}',
+                  style: const TextStyle(fontWeight: FontWeight.w500)),
               Text(
                 '${positivo ? '+' : ''}R\$ ${_formatarReal(lucro)}',
                 style: TextStyle(
@@ -406,15 +468,12 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.black45),
-        ),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: Colors.black45)),
         const SizedBox(height: 2),
-        Text(
-          valor,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
+        Text(valor,
+            style:
+                const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
       ],
     );
   }
@@ -438,138 +497,29 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
             children: [
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text(title,
+                  style: const TextStyle(
+                      color: Colors.grey, fontWeight: FontWeight.w500)),
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
+          Text(value,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, fontSize: 16)),
         ],
       ),
     );
   }
 
-  Widget _buildChart() {
-    final pontosDoFiltro = _pontosDoFiltro;
-
-    if (pontosDoFiltro.length < 2) {
-      return const Center(
-        child: Text(
-          'Faça depósitos ou saques para ver o gráfico.',
-          style: TextStyle(color: Colors.grey),
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
-
-    final labels = _labelsEixoX();
-    final totalLabels = labels.length;
-
-    final spots = List.generate(
-      pontosDoFiltro.length,
-      (i) => FlSpot(
-        (i / (pontosDoFiltro.length - 1)) * (totalLabels - 1),
-        (pontosDoFiltro[i]['saldo'] as num).toDouble(),
-      )
-    );
-
-    final maxY = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b) * 1.2;
-
-    return LineChart(
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-      LineChartData(
-        minY: 0,
-        maxY: maxY,
-        gridData: FlGridData(show: true, drawVerticalLine: false),
-        borderData: FlBorderData(show: false),
-        titlesData: FlTitlesData(
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 50,
-              interval: _calcularIntevalor(maxY),
-              getTitlesWidget: (value, meta) {
-                if(value == meta.max) return const SizedBox();
-
-                String label;
-                if (value >= 1000) {
-                  final k = value / 1000;
-                  label = k == k.roundToDouble() ? '${k.toInt()}k' : '${k.toStringAsFixed(1)}k';
-                } else {
-                  label = 'R\$ ${value.toInt()}';
-                }
-                return Text(
-                  label,
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
-                );
-              }
-            )
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 30,
-              interval: 1,
-              getTitlesWidget: (value, meta) {
-
-                final labels = _labelsEixoX();
-                final index = value.toInt();
-
-                if (index < 0 || index >= labels.length) return const SizedBox();
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    labels[index],
-                    style: const TextStyle(fontSize: 10, color: Colors.grey),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: true,
-            color: Colors.blue,
-            barWidth: 4,
-            dotData: FlDotData(show: true),
-            belowBarData: BarAreaData(
-              show: true,
-              color: Colors.blue.withOpacity(0.15)
-            )
-          )
-        ]
-      )
-    );
-  }
-
   String _filtroLabel(TimeFilter f) {
     switch (f) {
-      case TimeFilter.daily:
-        return 'Dia';
-      case TimeFilter.weekly:
-        return 'Semana';
-      case TimeFilter.monthly:
-        return 'Mes';
-      case TimeFilter.sixMonths:
-        return '6M';
-      case TimeFilter.ytd:
-        return 'YTD';
+      case TimeFilter.daily:     return 'Dia';
+      case TimeFilter.weekly:    return 'Semana';
+      case TimeFilter.monthly:   return 'Mês';
+      case TimeFilter.sixMonths: return '6M';
+      case TimeFilter.ytd:       return 'YTD';
     }
   }
-
 
   static String _formatarReal(num valor) {
     final texto = valor.toStringAsFixed(2);
@@ -579,41 +529,5 @@ if(filtrados.isEmpty || filtrados.first != _pontos.first) {
       '.',
     );
     return '$formatada,${partes[1]}';
-  }
-
-  List<String> _labelsEixoX() {
-    switch(_filtro) {
-      case TimeFilter.daily:
-        return ['00h', '03h', '06h', '09h', '12h', '15h', '18h', '21h', '24h'];
-      case TimeFilter.weekly:
-        return ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
-      case TimeFilter.monthly:
-        return ['S1', 'S2', 'S3', 'S4'];
-      case TimeFilter.sixMonths:
-        final agora = DateTime.now();
-        return List.generate(6, (i) {
-          final mes = DateTime(agora.year, agora.month - 5 + i);
-          const nomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-          return nomes[mes.month - 1];
-        });
-      case TimeFilter.ytd:
-        final agora = DateTime.now();
-        return List.generate(agora.month, (i) {
-          const nomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-          return nomes[i];
-        });
-    }
-  }
-
-  double _calcularIntevalor(double maxY) {
-  if (maxY <= 50) return 10;
-  if (maxY <= 100) return 20;
-  if (maxY <= 500) return 100;
-  if (maxY <= 1000) return 200;
-  if (maxY <= 2000) return 500;
-  if (maxY <= 5000) return 1000;
-  if (maxY <= 10000) return 2000;
-  if (maxY <= 50000) return 10000;
-  return 20000;
   }
 }
