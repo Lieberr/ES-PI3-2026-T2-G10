@@ -26,6 +26,29 @@ class _ProfilePageState extends State<ProfilePage> {
     region: 'southamerica-east1',
   );
 
+  @override
+  void initState() {
+    super.initState();
+    _carregarStatus2FA();
+  }
+
+
+  Future<void> _carregarStatus2FA() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final doc = await FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(uid)
+            .get();
+
+    if (mounted) {
+      setState(() {
+        is2FAEnabled = doc.data()?['twofaEnabled'] == true;
+      });
+    }
+  }
+
   // ─── Streams ─────────────────────────────────────────────────────────────
 
   Stream<Map<String, double>> _carteiraStream() {
@@ -753,7 +776,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     borderRadius: BorderRadius.circular(18),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18),
-                      onTap: () => Navigator.pushNamed(context, '/2fa'),
+                      onTap: is2FAEnabled
+                              ? null
+                              : () => Navigator.pushNamed(context, '/2fa'),
                       child: Container(
                         padding: const EdgeInsets.all(18),
                         child: Row(
