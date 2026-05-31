@@ -91,10 +91,13 @@ class _CriarOfertaPageState extends State<CriarOfertaPage> {
         Navigator.pop(context);
       }
     } on FirebaseFunctionsException catch (e) {
+      debugPrint(
+        'ERRO criarOferta: code=${e.code} | message=${e.message} | details=${e.details}',
+      );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Erro ao criar oferta.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${e.code}: ${e.message}')));
       }
     } catch (e) {
       debugPrint('ERRO GENERICO: $e');

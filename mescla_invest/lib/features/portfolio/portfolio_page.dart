@@ -57,13 +57,27 @@ class _PortfolioPageState extends State<PortfolioPage> {
         break;
     }
 
-     return _pontos.where((p) {
-    final partes = (p['label'] as String).split('/');
-    final dia = int.tryParse(partes[0]) ?? 0;
-    final mes = int.tryParse(partes[1]) ?? 0;
-    final data = DateTime(agora.year, mes, dia);
-    return data.isAfter(inicio) || data.isAtSameMomentAs(inicio);
-  }).toList();
+     final filtrados = _pontos.where((p) {
+      final partes = (p['label'] as String).split(' ');
+      final dateParts = partes[0].split('/');
+      final dia = int.tryParse(dateParts[0]) ?? 0;
+      final mes = int.tryParse(dateParts[1]) ?? 0;
+      final ano = int.tryParse(dateParts[2]) ?? agora.year;
+      final timeParts = partes.length > 1 ? partes[1].split(':') : ['0', '0'];
+      final hora = int.tryParse(timeParts[0]) ?? 0;
+      final minuto = int.tryParse(timeParts[1]) ?? 0;
+      final data = DateTime(ano, mes, dia, hora, minuto);
+      return data.isAfter(inicio) || data.isAtSameMomentAs(inicio);
+}).toList();
+
+if(filtrados.isEmpty || filtrados.first != _pontos.first) {
+  return [
+    {'label': '${inicio.day}/${inicio.month}/${inicio.year} 00:00', 'saldo': 0},
+    ...filtrados,
+  ];
+}
+  return filtrados;
+
   }
 
   Future<void> carregarPortfolio() async {
@@ -487,7 +501,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
               interval: _calcularIntevalor(maxY),
               getTitlesWidget: (value, meta) {
                 if(value == meta.max) return const SizedBox();
-                
+
                 String label;
                 if (value >= 1000) {
                   final k = value / 1000;

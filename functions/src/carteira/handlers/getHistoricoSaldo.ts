@@ -50,7 +50,7 @@ export const getHistoricoSaldo = onCall(
             }
 
             const data = op.realizadoEm.toDate();
-            const label = `${data.getDate()}/${data.getMonth() + 1}`;
+            const label = `${data.getDate()}/${data.getMonth() + 1}/${data.getFullYear()} ${data.getHours()}:${String(data.getMinutes()).padStart(2, '0')}`;
 
             pontos.push({label, saldo: saldoAcumulado});
         });

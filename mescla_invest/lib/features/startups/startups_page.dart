@@ -1,6 +1,5 @@
 //Feito por Gustavo Lieb RA: 24023376
 
-
 import 'package:flutter/material.dart';
 import 'widgets/startup_card.dart';
 import 'startup_details_page.dart';
@@ -113,6 +112,8 @@ class _HomePageState extends State<HomePage> {
 
                     itemBuilder: (context) => [
                       const PopupMenuItem(value: 'todos', child: Text('Todos')),
+
+                      const PopupMenuItem(value: 'Nova', child: Text('Nova')),
 
                       const PopupMenuItem(
                         value: 'Em operação',
