@@ -3,7 +3,7 @@
 import {db} from "../../shared/firebase";
 import {Pergunta} from "../types/pergunta";
 import {Timestamp} from "firebase-admin/firestore";
- 
+
 /**
  * Salva uma nova pergunta no Firestore.
  * @param {Omit<Pergunta, "id">} dados
@@ -17,11 +17,11 @@ export async function criarPerguntaRepo(
     .doc(dados.startupId)
     .collection("perguntas")
     .doc();
- 
+
   await ref.set({...dados, id: ref.id});
   return ref.id;
 }
- 
+
 /**
  * Busca perguntas públicas de uma startup.
  * @param {string} startupId
@@ -37,11 +37,11 @@ export async function buscarPerguntasPublicas(
     .where("visibilidade", "==", "publica")
     .orderBy("criadoEm", "desc")
     .get();
- 
+
   if (snap.empty) return [];
   return snap.docs.map((doc) => doc.data() as Pergunta);
 }
- 
+
 /**
  * Busca perguntas privadas de uma startup.
  * @param {string} startupId
@@ -57,11 +57,11 @@ export async function buscarPerguntasPrivadas(
     .where("visibilidade", "==", "privada")
     .orderBy("criadoEm", "desc")
     .get();
- 
+
   if (snap.empty) return [];
   return snap.docs.map((doc) => doc.data() as Pergunta);
 }
- 
+
 /**
  * Verifica se o usuário possui tokens da startup.
  * @param {string} uid
@@ -78,11 +78,11 @@ export async function usuarioEhInvestidor(
     .collection("tokens")
     .doc(startupId)
     .get();
- 
+
   if (!tokenDoc.exists) return false;
   return (tokenDoc.data()?.quantidade ?? 0) > 0;
 }
- 
+
 /**
  * Atualiza a resposta de uma pergunta existente.
  * @param {string} startupId
