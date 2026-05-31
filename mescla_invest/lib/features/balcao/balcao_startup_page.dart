@@ -80,6 +80,9 @@ class _BalcaoStartupPageState extends State<BalcaoStartupPage>
         setState(() {
           _minhasOfertas = lista.where((o) => o['status'] == 'aberta').toList();
           _historico = lista.where((o) => o['status'] != 'aberta').toList();
+          debugPrint(
+            'historico[0]: ${_historico.isNotEmpty ? _historico[0] : "vazio"}',
+          );
           _carregandoHistorico = false;
         });
       }
@@ -632,13 +635,17 @@ class _HistoricoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = oferta['status'] as String? ?? '';
     final tipo = oferta['tipo'] as String? ?? '';
-    final nomeComprador = oferta['nomeComprador'] as String? ?? 'Aguardando';
-    final nomeVendedor = oferta['nomeVendedor'] as String? ?? 'Aguardando';
+    final isCancelada = status == 'cancelada';
+    final nomeComprador =
+        oferta['nomeComprador'] as String? ??
+        (isCancelada ? 'Não houve' : 'Aguardando');
+    final nomeVendedor =
+        oferta['nomeVendedor'] as String? ??
+        (isCancelada ? 'Não houve' : 'Aguardando');
     final euSouComprador = oferta['uidComprador'] == uidAtual;
     final euSouVendedor = oferta['uidVendedor'] == uidAtual;
 
     final isFechada = status == 'fechada';
-    final isCancelada = status == 'cancelada';
     final corStatus = isFechada
         ? Colors.green
         : isCancelada

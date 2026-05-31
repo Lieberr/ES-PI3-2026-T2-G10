@@ -50,6 +50,14 @@ export const getMinhasOfertas = onCall(
             null,
         ]);
 
+        console.log("oferta:", JSON.stringify({
+          id: oferta.id,
+          uidComprador: oferta.uidComprador,
+          uidVendedor: oferta.uidVendedor,
+          nomeComprador: comprador?.nomeCompleto,
+          nomeVendedor: vendedor?.nomeCompleto,
+        }));
+
         return {
           ...oferta,
           nomeComprador: comprador?.nomeCompleto ?? null,
