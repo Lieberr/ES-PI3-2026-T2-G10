@@ -3,8 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:mescla_invest/features/perfil/tabs/editarDadosPessoais_page.dart';
-import 'package:mescla_invest/features/perfil/tabs/2FA_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -28,16 +26,24 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ─── Streams ─────────────────────────────────────────────────────────────
 
-  Stream<double> _saldoStream() {
+  Stream<Map<String, double>> _carteiraStream() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return Stream.value(0.0);
+    if (user == null)
+      return Stream.value({'saldo': 0.0, 'saldoReservado': 0.0});
     return FirebaseFirestore.instance
         .collection('carteiras')
         .doc(user.uid)
         .snapshots()
-        .map((doc) => (doc.data()?['saldo'] as num?)?.toDouble() ?? 0.0);
+        .map(
+          (doc) => {
+            'saldo': (doc.data()?['saldo'] as num?)?.toDouble() ?? 0.0,
+            'saldoReservado':
+                (doc.data()?['saldoReservado'] as num?)?.toDouble() ?? 0.0,
+          },
+        );
   }
 
+  // todas as operações ficam em 'operacoes'
   Stream<QuerySnapshot> _movimentacoesStream() {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     return FirebaseFirestore.instance
@@ -46,6 +52,36 @@ class _ProfilePageState extends State<ProfilePage> {
         .collection('operacoes')
         .orderBy('realizadoEm', descending: true)
         .snapshots();
+  }
+
+  // ─── Logout ──────────────────────────────────────────────────────────────
+
+  Future<void> _sair() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sair da conta'),
+        content: const Text('Tem certeza que deseja sair?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Sair', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      await FirebaseAuth.instance.signOut();
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    }
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -75,18 +111,21 @@ class _ProfilePageState extends State<ProfilePage> {
             borderRadius: BorderRadius.circular(24),
           ),
           insetPadding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 40),
+            horizontal: 16,
+            vertical: 40,
+          ),
           child: SizedBox(
             height: MediaQuery.of(context).size.height * 0.65,
             child: Column(
               children: [
-                // ── Cabeçalho ──
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 8, 0),
                   child: Row(
                     children: [
-                      const Icon(Icons.receipt_long_outlined,
-                          color: Color(0xff2453ff)),
+                      const Icon(
+                        Icons.receipt_long_outlined,
+                        color: Color(0xff2453ff),
+                      ),
                       const SizedBox(width: 10),
                       const Text(
                         "Histórico",
@@ -103,48 +142,42 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                 ),
-
                 const Divider(height: 20),
-
-                // ── Lista ──
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: _movimentacoesStream(),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
-                        return const Center(
-                            child: CircularProgressIndicator());
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
                       }
-
                       if (snapshot.hasError) {
                         return const Center(
                           child: Text("Erro ao carregar histórico."),
                         );
                       }
-
                       final docs = snapshot.data?.docs ?? [];
-
                       if (docs.isEmpty) {
                         return Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.receipt_long_outlined,
-                                  size: 48,
-                                  color: Colors.grey.shade400),
+                              Icon(
+                                Icons.receipt_long_outlined,
+                                size: 48,
+                                color: Colors.grey.shade400,
+                              ),
                               const SizedBox(height: 12),
                               Text(
                                 "Nenhuma movimentação ainda.",
                                 style: TextStyle(
-                                    color: Colors.grey.shade500,
-                                    fontSize: 15),
+                                  color: Colors.grey.shade500,
+                                  fontSize: 15,
+                                ),
                               ),
                             ],
                           ),
                         );
                       }
-
                       return ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                         itemCount: docs.length,
@@ -167,15 +200,13 @@ class _ProfilePageState extends State<ProfilePage> {
                               padding: const EdgeInsets.all(14),
                               child: Row(
                                 children: [
-                                  // ── Ícone ──
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
                                       color: isDeposito
                                           ? Colors.green.withOpacity(0.1)
                                           : Colors.red.withOpacity(0.1),
-                                      borderRadius:
-                                          BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(
                                       isDeposito
@@ -188,34 +219,29 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ),
                                   ),
                                   const SizedBox(width: 12),
-
-                                  // ── Descrição e data ──
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          isDeposito
-                                              ? "Depósito"
-                                              : "Saque",
+                                          isDeposito ? "Depósito" : "Saque",
                                           style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
                                         ),
                                         const SizedBox(height: 3),
-
                                         Text(
                                           _formatarData(timestamp),
                                           style: TextStyle(
-                                              color: Colors.grey.shade400,
-                                              fontSize: 12),
+                                            color: Colors.grey.shade400,
+                                            fontSize: 12,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
-
-                                  // ── Valor ──
                                   Text(
                                     "${isDeposito ? '+' : '-'} ${_formatarMoeda(valor)}",
                                     style: TextStyle(
@@ -284,7 +310,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       await _functions.httpsCallable('sacar').call({'valor': valor});
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -298,15 +323,6 @@ class _ProfilePageState extends State<ProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Erro ao sacar: ${e.message ?? e.code}"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Erro inesperado: $e"),
             backgroundColor: Colors.red,
           ),
         );
@@ -383,7 +399,6 @@ class _ProfilePageState extends State<ProfilePage> {
     if (pagou == true) {
       try {
         await _functions.httpsCallable('depositar').call({'valor': valor});
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -397,15 +412,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text("Erro ao depositar: ${e.message ?? e.code}"),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Erro inesperado: $e"),
               backgroundColor: Colors.red,
             ),
           );
@@ -443,14 +449,12 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // ─── IMAGEM DE PERFIL ─────────────────────────────────────────────────────
+  // ─── IMAGEM ───────────────────────────────────────────────────────────────
 
   Future<void> pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      setState(() {
-        _profileImage = File(image.path);
-      });
+      setState(() => _profileImage = File(image.path));
     }
   }
 
@@ -490,14 +494,18 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: [
                           CircleAvatar(
                             radius: 55,
-                            backgroundColor:
-                                const Color(0xff2453ff).withOpacity(0.15),
+                            backgroundColor: const Color(
+                              0xff2453ff,
+                            ).withOpacity(0.15),
                             backgroundImage: _profileImage != null
                                 ? FileImage(_profileImage!)
                                 : null,
                             child: _profileImage == null
-                                ? const Icon(Icons.person,
-                                    size: 60, color: Color(0xff2453ff))
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Color(0xff2453ff),
+                                  )
                                 : null,
                           ),
                           Positioned(
@@ -511,8 +519,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                   color: Color(0xff2453ff),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.camera_alt,
-                                    color: Colors.white, size: 18),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
                               ),
                             ),
                           ),
@@ -522,13 +533,17 @@ class _ProfilePageState extends State<ProfilePage> {
                       Text(
                         user.displayName ?? 'Usuário',
                         style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.bold),
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 5),
                       Text(
                         user.email ?? '',
                         style: const TextStyle(
-                            color: Colors.grey, fontSize: 15),
+                          color: Colors.grey,
+                          fontSize: 15,
+                        ),
                       ),
                     ],
                   ),
@@ -548,99 +563,128 @@ class _ProfilePageState extends State<ProfilePage> {
                         colors: [Color(0xff2453ff), Color(0xff1d3ed8)],
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ── Saldo ──
-                        const Text(
-                          "Saldo Disponível",
-                          style: TextStyle(
-                              color: Colors.white70, fontSize: 16),
-                        ),
-                        const SizedBox(height: 10),
-                        StreamBuilder<double>(
-                          stream: _saldoStream(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const CircularProgressIndicator(
-                                  color: Colors.white);
-                            }
-                            if (snapshot.hasError) {
-                              return const Text("Erro ao carregar",
-                                  style:
-                                      TextStyle(color: Colors.white70));
-                            }
-                            return Text(
-                              _formatarMoeda(snapshot.data ?? 0.0),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 34,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            );
-                          },
-                        ),
+                    child: StreamBuilder<Map<String, double>>(
+                      stream: _carteiraStream(),
+                      builder: (context, snapshot) {
+                        final saldo = snapshot.data?['saldo'] ?? 0.0;
+                        final saldoReservado =
+                            snapshot.data?['saldoReservado'] ?? 0.0;
+                        final carregando =
+                            snapshot.connectionState == ConnectionState.waiting;
 
-                        const SizedBox(height: 20),
-
-                        // ── Botões Depositar / Sacar ──
-                        Row(
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: SizedBox(
-                                height: 50,
-                                child: ElevatedButton.icon(
-                                  onPressed: _iniciarAdicaoSaldo,
-                                  icon: const Icon(Icons.add),
-                                  label: const Text("Depositar"),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor:
-                                        const Color(0xff2453ff),
-                                  ),
-                                ),
+                            // saldo disponível
+                            const Text(
+                              "Saldo Disponível",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
                               ),
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: SizedBox(
-                                height: 50,
-                                child: ElevatedButton.icon(
-                                  onPressed: _iniciarSaque,
-                                  icon: const Icon(Icons.remove),
-                                  label: const Text("Sacar"),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                    foregroundColor: Colors.white,
+                            const SizedBox(height: 8),
+                            carregando
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : Text(
+                                    _formatarMoeda(saldo),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 34,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+
+                            // saldo reservado — só aparece se > 0
+                            if (!carregando && saldoReservado > 0) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.lock_outline,
+                                    color: Colors.redAccent,
+                                    size: 13,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    "${_formatarMoeda(saldoReservado)} em negociação",
+                                    style: const TextStyle(
+                                      color: Colors.redAccent,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+
+                            const SizedBox(height: 20),
+
+                            // botões depositar / sacar
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 50,
+                                    child: ElevatedButton.icon(
+                                      onPressed: _iniciarAdicaoSaldo,
+                                      icon: const Icon(Icons.add),
+                                      label: const Text("Depositar"),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                        foregroundColor: const Color(
+                                          0xff2453ff,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 50,
+                                    child: ElevatedButton.icon(
+                                      onPressed: _iniciarSaque,
+                                      icon: const Icon(Icons.remove),
+                                      label: const Text("Sacar"),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // botão histórico
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: ElevatedButton.icon(
+                                onPressed: _abrirHistorico,
+                                icon: const Icon(Icons.receipt_long_outlined),
+                                label: const Text("Ver Histórico"),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white.withOpacity(
+                                    0.15,
+                                  ),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  side: const BorderSide(
+                                    color: Colors.white54,
+                                    width: 1,
                                   ),
                                 ),
                               ),
                             ),
                           ],
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // ── Botão Histórico ──
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton.icon(
-                            onPressed: _abrirHistorico,
-                            icon: const Icon(Icons.receipt_long_outlined),
-                            label: const Text("Ver Histórico"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Colors.white.withOpacity(0.15),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              side: const BorderSide(
-                                  color: Colors.white54, width: 1),
-                            ),
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -652,23 +696,21 @@ class _ProfilePageState extends State<ProfilePage> {
                   icon: Icons.person_outline,
                   title: "Dados Pessoais",
                   subtitle: "Editar informações da conta",
-                  onTap: () {
-                    // Navigator aqui
-                  },
+                  onTap: () {},
                 ),
 
                 // ── 2FA ──
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Material(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18),
-                      onTap: () {
-                        // Navigator aqui
-                      },
+                      onTap: () {},
                       child: Container(
                         padding: const EdgeInsets.all(18),
                         child: Row(
@@ -676,12 +718,13 @@ class _ProfilePageState extends State<ProfilePage> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: const Color(0xff2453ff)
-                                    .withOpacity(0.1),
+                                color: const Color(0xff2453ff).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.shield_outlined,
-                                  color: Color(0xff2453ff)),
+                              child: const Icon(
+                                Icons.shield_outlined,
+                                color: Color(0xff2453ff),
+                              ),
                             ),
                             const SizedBox(width: 15),
                             Expanded(
@@ -691,8 +734,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                   const Text(
                                     "Autenticação 2FA",
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -708,8 +752,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.arrow_forward_ios,
-                                size: 16, color: Colors.grey),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
                           ],
                         ),
                       ),
@@ -725,6 +772,56 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () {},
                 ),
 
+                // ── Sair ──
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Material(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: _sair,
+                      child: Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.logout,
+                                color: Colors.red,
+                              ),
+                            ),
+                            const SizedBox(width: 15),
+                            const Expanded(
+                              child: Text(
+                                "Sair da conta",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 30),
               ],
             ),
@@ -733,169 +830,6 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-
-  // ─── WIDGET DO HISTÓRICO ──────────────────────────────────────────────────
-
-  Widget _buildHistorico() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 12),
-            child: Text(
-              "Movimentações",
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          StreamBuilder<QuerySnapshot>(
-            stream: _movimentacoesStream(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
-
-              if (snapshot.hasError) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text("Erro ao carregar histórico."),
-                  ),
-                );
-              }
-
-              final docs = snapshot.data?.docs ?? [];
-
-              if (docs.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      children: [
-                        Icon(Icons.receipt_long_outlined,
-                            size: 48, color: Colors.grey.shade400),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Nenhuma movimentação ainda.",
-                          style: TextStyle(
-                              color: Colors.grey.shade500, fontSize: 15),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              return Column(
-                children: docs.map((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final tipo = data['tipo'] as String? ?? '';
-                  final valor =
-                      (data['valor'] as num?)?.toDouble() ?? 0.0;
-                  final timestamp = data['data'] as Timestamp?;
-                  final descricao = data['descricao'] as String? ?? '';
-                  final isDeposito = tipo == 'deposito';
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Row(
-                        children: [
-                          // ── Ícone ──
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isDeposito
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.red.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              isDeposito
-                                  ? Icons.arrow_downward_rounded
-                                  : Icons.arrow_upward_rounded,
-                              color:
-                                  isDeposito ? Colors.green : Colors.red,
-                              size: 20,
-                            ),
-                          ),
-
-                          const SizedBox(width: 12),
-
-                          // ── Tipo e data ──
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  isDeposito ? "Depósito" : "Saque",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14),
-                                ),
-                                const SizedBox(height: 3),
-                                if (descricao.isNotEmpty)
-                                  Text(
-                                    descricao,
-                                    style: TextStyle(
-                                        color: Colors.grey.shade500,
-                                        fontSize: 12),
-                                  ),
-                                Text(
-                                  _formatarData(timestamp),
-                                  style: TextStyle(
-                                      color: Colors.grey.shade400,
-                                      fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // ── Valor ──
-                          Text(
-                            "${isDeposito ? '+' : '-'} ${_formatarMoeda(valor)}",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color:
-                                  isDeposito ? Colors.green : Colors.red,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─── TILE GENÉRICO ────────────────────────────────────────────────────────
 
   Widget buildTile({
     required IconData icon,
@@ -931,16 +865,23 @@ class _ProfilePageState extends State<ProfilePage> {
                       Text(
                         title,
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      Text(subtitle,
-                          style: const TextStyle(color: Colors.grey)),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
                     ],
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey,
+                ),
               ],
             ),
           ),

@@ -5,6 +5,8 @@ import {CallableRequest, HttpsError, onCall} from
 import {TransacaoSecundaria}
   from "../../carteira/types/transacao";
 import {db} from "../../shared/firebase";
+import {buscarUsuarioPorUid}
+  from "../../usuarios/repositories/usuarioRepository";
 
 export const getMinhasOfertas = onCall(
   async (request: CallableRequest<Record<string, never>>) => {
@@ -37,6 +39,33 @@ export const getMinhasOfertas = onCall(
       }))
       .sort((a, b) => b.criadaEm.toMillis() - a.criadaEm.toMillis());
 
-    return {ofertas: todasOfertas};
+    const ofertasComNomes = await Promise.all(
+      todasOfertas.map(async (oferta) => {
+        const [comprador, vendedor] = await Promise.all([
+          oferta.uidComprador ?
+            buscarUsuarioPorUid(oferta.uidComprador) :
+            null,
+          oferta.uidVendedor ?
+            buscarUsuarioPorUid(oferta.uidVendedor) :
+            null,
+        ]);
+
+        console.log("oferta:", JSON.stringify({
+          id: oferta.id,
+          uidComprador: oferta.uidComprador,
+          uidVendedor: oferta.uidVendedor,
+          nomeComprador: comprador?.nomeCompleto,
+          nomeVendedor: vendedor?.nomeCompleto,
+        }));
+
+        return {
+          ...oferta,
+          nomeComprador: comprador?.nomeCompleto ?? null,
+          nomeVendedor: vendedor?.nomeCompleto ?? null,
+        };
+      })
+    );
+
+    return {ofertas: ofertasComNomes};
   }
 );
