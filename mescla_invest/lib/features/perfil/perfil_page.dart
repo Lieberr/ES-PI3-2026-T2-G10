@@ -739,7 +739,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   icon: Icons.person_outline,
                   title: "Dados Pessoais",
                   subtitle: "Editar informações da conta",
-                  onTap: () {},
+                  onTap: () => Navigator.pushNamed(context, '/dados-pessoais'),
                 ),
 
                 // ── 2FA ──
@@ -753,7 +753,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     borderRadius: BorderRadius.circular(18),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18),
-                      onTap: () {},
+                      onTap: () => Navigator.pushNamed(context, '/2fa'),
                       child: Container(
                         padding: const EdgeInsets.all(18),
                         child: Row(
