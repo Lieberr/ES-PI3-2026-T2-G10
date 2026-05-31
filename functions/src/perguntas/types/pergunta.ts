@@ -2,6 +2,8 @@
 
 import {Timestamp} from "firebase-admin/firestore";
  
+export type Visibilidade = "publica" | "privada";
+ 
 export interface Pergunta {
   id: string;
   startupId: string;
@@ -11,11 +13,12 @@ export interface Pergunta {
   resposta: string | null;
   respondidoEm: Timestamp | null;
   criadoEm: Timestamp;
-  publica: boolean; // true = visível a todos | false = só investidores
+  visibilidade: Visibilidade;
 }
  
 export interface CriarPerguntaInput {
   startupId: string;
   texto: string;
+  visibilidade: Visibilidade;
 }
  

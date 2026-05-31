@@ -3,13 +3,13 @@
 import {db} from "../../shared/firebase";
 import {Pergunta} from "../types/pergunta";
 import {Timestamp} from "firebase-admin/firestore";
-
+ 
 /**
  * Salva uma nova pergunta no Firestore.
- * @param {Omit<Pergunta, "id">} dados - Dados da pergunta sem o id
- * @return {Promise<string>} ID gerado do documento
+ * @param {Omit<Pergunta, "id">} dados
+ * @return {Promise<string>}
  */
-export async function criarPergunta(
+export async function criarPerguntaRepo(
   dados: Omit<Pergunta, "id">
 ): Promise<string> {
   const ref = db
@@ -17,15 +17,14 @@ export async function criarPergunta(
     .doc(dados.startupId)
     .collection("perguntas")
     .doc();
-
+ 
   await ref.set({...dados, id: ref.id});
   return ref.id;
 }
-
+ 
 /**
- * Busca todas as perguntas PÚBLICAS de uma startup.
- * Visíveis a qualquer usuário autenticado.
- * @param {string} startupId - ID da startup
+ * Busca perguntas públicas de uma startup.
+ * @param {string} startupId
  * @return {Promise<Pergunta[]>}
  */
 export async function buscarPerguntasPublicas(
@@ -35,18 +34,17 @@ export async function buscarPerguntasPublicas(
     .collection("startups")
     .doc(startupId)
     .collection("perguntas")
-    .where("publica", "==", true)
+    .where("visibilidade", "==", "publica")
     .orderBy("criadoEm", "desc")
     .get();
-
+ 
   if (snap.empty) return [];
   return snap.docs.map((doc) => doc.data() as Pergunta);
 }
-
+ 
 /**
- * Busca todas as perguntas PRIVADAS de uma startup.
- * Só acessível após verificar que o usuário possui tokens.
- * @param {string} startupId - ID da startup
+ * Busca perguntas privadas de uma startup.
+ * @param {string} startupId
  * @return {Promise<Pergunta[]>}
  */
 export async function buscarPerguntasPrivadas(
@@ -56,19 +54,18 @@ export async function buscarPerguntasPrivadas(
     .collection("startups")
     .doc(startupId)
     .collection("perguntas")
-    .where("publica", "==", false)
+    .where("visibilidade", "==", "privada")
     .orderBy("criadoEm", "desc")
     .get();
-
+ 
   if (snap.empty) return [];
   return snap.docs.map((doc) => doc.data() as Pergunta);
 }
-
+ 
 /**
- * Verifica se o usuário possui tokens de determinada startup.
- * Usado para liberar acesso às perguntas privadas.
- * @param {string} uid - UID do usuário
- * @param {string} startupId - ID da startup
+ * Verifica se o usuário possui tokens da startup.
+ * @param {string} uid
+ * @param {string} startupId
  * @return {Promise<boolean>}
  */
 export async function usuarioEhInvestidor(
@@ -81,15 +78,13 @@ export async function usuarioEhInvestidor(
     .collection("tokens")
     .doc(startupId)
     .get();
-
+ 
   if (!tokenDoc.exists) return false;
-  const quantidade = tokenDoc.data()?.quantidade ?? 0;
-  return quantidade > 0;
+  return (tokenDoc.data()?.quantidade ?? 0) > 0;
 }
-
+ 
 /**
  * Atualiza a resposta de uma pergunta existente.
- * Usado pelo seed ou painel admin.
  * @param {string} startupId
  * @param {string} perguntaId
  * @param {string} resposta
