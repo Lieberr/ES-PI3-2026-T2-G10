@@ -1,4 +1,5 @@
 // Feito por Leonardo Dionel RA: 25010092
+// Feito por Gustavo Lieb Ra: 24023376
 
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -14,14 +15,13 @@ class PortfolioPage extends StatefulWidget {
 }
 
 class _PortfolioPageState extends State<PortfolioPage> {
-  final _functions = FirebaseFunctions.instanceFor(
-    region: 'southamerica-east1',
-  );
+  final _functions = FirebaseFunctions.instanceFor(region: 'southamerica-east1');
 
   TimeFilter _filtro = TimeFilter.monthly;
   Map<String, dynamic> _resumo = {};
   List<Map<String, dynamic>> _itens = [];
   bool _carregando = true;
+  List<Map<String, dynamic>> _historico = [];  // <-- substituiu _pontosPortfolio
 
   @override
   void initState() {
@@ -29,24 +29,91 @@ class _PortfolioPageState extends State<PortfolioPage> {
     carregarPortfolio();
   }
 
+  // Filtra _historico pelo período selecionado
+  List<Map<String, dynamic>> get _pontosDoFiltro {
+    if (_historico.isEmpty) return [];
+
+    final agora = DateTime.now();
+    DateTime inicio;
+
+    switch (_filtro) {
+      case TimeFilter.daily:
+        inicio = agora.subtract(const Duration(days: 1));
+        break;
+      case TimeFilter.weekly:
+        inicio = agora.subtract(const Duration(days: 7));
+        break;
+      case TimeFilter.monthly:
+        inicio = agora.subtract(const Duration(days: 30));
+        break;
+      case TimeFilter.sixMonths:
+        inicio = agora.subtract(const Duration(days: 180));
+        break;
+      case TimeFilter.ytd:
+        inicio = DateTime(agora.year, 1, 1);
+        break;
+    }
+
+    return _historico.where((p) {
+      final data = DateTime.tryParse(p['data'] ?? '');
+      return data != null && data.isAfter(inicio);
+    }).toList();
+  }
+
   Future<void> carregarPortfolio() async {
     try {
+      // 1. Busca resumo e itens do portfólio
       final callable = _functions.httpsCallable('getPortfolio');
       final result = await callable.call();
+
+      final itens = List<Map<String, dynamic>>.from(
+        (result.data['itens'] ?? []).map((e) => Map<String, dynamic>.from(e)),
+      );
+
+      // 2. Para cada startup, busca o histórico e agrega
+      final historicoAgregado = <String, Map<String, dynamic>>{};
+
+      for (final item in itens) {
+        final startupId = item['startupId'] as String? ?? '';
+        if (startupId.isEmpty) continue;
+
+        final res = await _functions
+            .httpsCallable('getHistoricoToken')
+            .call({'startupId': startupId});
+
+        final historico = List<Map<String, dynamic>>.from(
+          (res.data['historicoGrafico'] ?? []).map((e) => Map<String, dynamic>.from(e)),
+        );
+        final quantidade = (item['quantidade'] as num?)?.toDouble() ?? 0;
+
+        for (final ponto in historico) {
+          final data = ponto['data'] as String? ?? '';
+          final valorToken = (ponto['valorToken'] as num?)?.toDouble() ?? 0;
+          final contribuicao = valorToken * quantidade;
+
+          if (historicoAgregado.containsKey(data)) {
+            historicoAgregado[data]!['valorTotal'] =
+                (historicoAgregado[data]!['valorTotal'] as double) + contribuicao;
+          } else {
+            historicoAgregado[data] = {'data': data, 'valorTotal': contribuicao};
+          }
+        }
+      }
+
+      // Ordena por data ISO (funciona direto com compareTo)
+      final historicoOrdenado = historicoAgregado.values.toList()
+        ..sort((a, b) => (a['data'] as String).compareTo(b['data'] as String));
 
       if (mounted) {
         setState(() {
           _resumo = Map<String, dynamic>.from(result.data['resumo'] ?? {});
-          _itens = List<Map<String, dynamic>>.from(
-            (result.data['itens'] ?? []).map(
-              (e) => Map<String, dynamic>.from(e),
-            ),
-          );
+          _itens = itens;
+          _historico = historicoOrdenado;  // <-- salva aqui
           _carregando = false;
         });
       }
     } on FirebaseFunctionsException catch (e) {
-      debugPrint('ERRO getPortfolio: ${e.code} | ${e.message}');
+      debugPrint('ERRO: ${e.code} | ${e.message}');
       if (mounted) setState(() => _carregando = false);
     } catch (e) {
       debugPrint('ERRO GENERICO: $e');
@@ -93,24 +160,18 @@ class _PortfolioPageState extends State<PortfolioPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Valor Total do Portfólio',
-                            style: TextStyle(color: Colors.black54),
-                          ),
+                          const Text('Valor Total do Portfólio',
+                              style: TextStyle(color: Colors.black54)),
                           const SizedBox(height: 8),
                           Text(
                             'R\$ ${_formatarReal(totalAtual)}',
                             style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
+                                fontSize: 32, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: positivo
                                   ? Colors.green.withOpacity(0.1)
@@ -153,8 +214,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
                     const SizedBox(height: 20),
 
-                    // GRÁFICO — filtros visuais, dados mockados por período
-                    // (substitua por getHistoricoToken quando integrar)
+                    // GRÁFICO
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -166,11 +226,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Distribuição do Portfólio',
+                            'Evolução do Portfólio',
                             style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 20),
                           Row(
@@ -181,9 +239,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
                                 onTap: () => setState(() => _filtro = f),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
+                                      horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: sel
                                         ? Colors.blue
@@ -193,7 +249,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
                                   child: Text(
                                     _filtroLabel(f),
                                     style: TextStyle(
-                                      color: sel ? Colors.white : Colors.black,
+                                      color:
+                                          sel ? Colors.white : Colors.black,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
@@ -225,17 +282,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
                     const SizedBox(height: 20),
 
-                    // LISTA DE INVESTIMENTOS REAIS
+                    // LISTA DE INVESTIMENTOS
                     const Text(
                       'Meus Investimentos',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-
                     const SizedBox(height: 10),
-
                     if (_itens.isEmpty)
                       const Center(
                         child: Padding(
@@ -252,6 +304,83 @@ class _PortfolioPageState extends State<PortfolioPage> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildChart() {
+    final pontos = _pontosDoFiltro;
+
+    if (pontos.length < 2) {
+      return const Center(
+        child: Text(
+          'Compre token para ver a valorização do seu portfólio',
+          style: TextStyle(color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    final valores = pontos
+        .map((p) => (p['valorTotal'] as num?)?.toDouble() ?? 0)
+        .toList();
+
+    final minY = valores.reduce((a, b) => a < b ? a : b) * 0.95;
+    final maxY = valores.reduce((a, b) => a > b ? a : b) * 1.05;
+
+    return LineChart(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+      LineChartData(
+        minY: minY,
+        maxY: maxY,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: (maxY - minY) / 3,
+        ),
+        borderData: FlBorderData(show: false),
+        titlesData: FlTitlesData(
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 50,
+              getTitlesWidget: (value, meta) {
+                if (value == meta.max) return const SizedBox();
+                String label;
+                if (value >= 1000) {
+                  final k = value / 1000;
+                  label = k == k.roundToDouble()
+                      ? '${k.toInt()}k'
+                      : '${k.toStringAsFixed(1)}k';
+                } else {
+                  label = 'R\$ ${value.toInt()}';
+                }
+                return Text(label,
+                    style: const TextStyle(fontSize: 10, color: Colors.grey));
+              },
+            ),
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: List.generate(
+              valores.length,
+              (i) => FlSpot(i.toDouble(), valores[i]),
+            ),
+            isCurved: true,
+            color: Colors.blue,
+            barWidth: 4,
+            dotData: FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: Colors.blue.withOpacity(0.15),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -279,18 +408,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                nome,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text(nome,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: positivo
                       ? Colors.green.withOpacity(0.1)
@@ -309,10 +432,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            '$quantidade tokens',
-            style: const TextStyle(color: Colors.grey),
-          ),
+          Text('$quantidade tokens',
+              style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -327,10 +448,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Investido: R\$ ${_formatarReal(valorInvestido)}',
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
+              Text('Investido: R\$ ${_formatarReal(valorInvestido)}',
+                  style: const TextStyle(fontWeight: FontWeight.w500)),
               Text(
                 '${positivo ? '+' : ''}R\$ ${_formatarReal(lucro)}',
                 style: TextStyle(
@@ -349,15 +468,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.black45),
-        ),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: Colors.black45)),
         const SizedBox(height: 2),
-        Text(
-          valor,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
+        Text(valor,
+            style:
+                const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
       ],
     );
   }
@@ -381,100 +497,15 @@ class _PortfolioPageState extends State<PortfolioPage> {
             children: [
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text(title,
+                  style: const TextStyle(
+                      color: Colors.grey, fontWeight: FontWeight.w500)),
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChart() {
-    final data = _getChartData(_filtro);
-    final market = _getMarketData(_filtro);
-
-    return LineChart(
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-      LineChartData(
-        minY: 0,
-        maxY: 12,
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: 2,
-        ),
-        borderData: FlBorderData(show: false),
-        titlesData: FlTitlesData(
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 30,
-              getTitlesWidget: (value, meta) {
-                final labels = _bottomLabels();
-                if (value.toInt() >= labels.length) {
-                  return const SizedBox();
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    labels[value.toInt()],
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                );
-              },
-            ),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              interval: 2,
-              reservedSize: 42,
-              getTitlesWidget: (value, meta) => Text(
-                'R\$ ${value.toInt()}k',
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
-              ),
-            ),
-          ),
-        ),
-        lineBarsData: [
-          LineChartBarData(
-            spots: List.generate(
-              data.length,
-              (i) => FlSpot(i.toDouble(), data[i]),
-            ),
-            isCurved: true,
-            color: Colors.blue,
-            barWidth: 4,
-            dotData: FlDotData(show: true),
-            belowBarData: BarAreaData(
-              show: true,
-              color: Colors.blue.withOpacity(0.15),
-            ),
-          ),
-          LineChartBarData(
-            spots: List.generate(
-              market.length,
-              (i) => FlSpot(i.toDouble(), market[i]),
-            ),
-            isCurved: true,
-            color: Colors.grey,
-            barWidth: 3,
-            dotData: FlDotData(show: false),
-          ),
+          Text(value,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, fontSize: 16)),
         ],
       ),
     );
@@ -482,61 +513,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
   String _filtroLabel(TimeFilter f) {
     switch (f) {
-      case TimeFilter.daily:
-        return 'Dia';
-      case TimeFilter.weekly:
-        return 'Semana';
-      case TimeFilter.monthly:
-        return 'Mes';
-      case TimeFilter.sixMonths:
-        return '6M';
-      case TimeFilter.ytd:
-        return 'YTD';
-    }
-  }
-
-  List<String> _bottomLabels() {
-    switch (_filtro) {
-      case TimeFilter.daily:
-        return ['09h', '11h', '13h', '15h', '18h'];
-      case TimeFilter.weekly:
-        return ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
-      case TimeFilter.monthly:
-        return ['S1', 'S2', 'S3', 'S4'];
-      case TimeFilter.sixMonths:
-        return ['Jan', 'Fev', 'Mar', 'Abr', 'Mai'];
-      case TimeFilter.ytd:
-        return ['Jan', 'Mar', 'Mai', 'Jul', 'Set'];
-    }
-  }
-
-  List<double> _getChartData(TimeFilter f) {
-    switch (f) {
-      case TimeFilter.daily:
-        return [9.8, 9.9, 10.0, 10.1, 10.25];
-      case TimeFilter.weekly:
-        return [9.5, 9.8, 9.7, 10.0, 10.25];
-      case TimeFilter.monthly:
-        return [8.5, 9.0, 9.8, 10.25];
-      case TimeFilter.sixMonths:
-        return [7.0, 7.8, 8.5, 9.0, 10.25];
-      case TimeFilter.ytd:
-        return [6.0, 7.0, 8.0, 9.5, 10.25];
-    }
-  }
-
-  List<double> _getMarketData(TimeFilter f) {
-    switch (f) {
-      case TimeFilter.daily:
-        return [9.5, 9.7, 9.8, 9.9, 10.0];
-      case TimeFilter.weekly:
-        return [9.2, 9.4, 9.5, 9.7, 9.9];
-      case TimeFilter.monthly:
-        return [8.0, 8.4, 8.8, 9.2];
-      case TimeFilter.sixMonths:
-        return [6.5, 7.0, 7.5, 8.0, 9.0];
-      case TimeFilter.ytd:
-        return [5.5, 6.5, 7.2, 8.5, 9.3];
+      case TimeFilter.daily:     return 'Dia';
+      case TimeFilter.weekly:    return 'Semana';
+      case TimeFilter.monthly:   return 'Mês';
+      case TimeFilter.sixMonths: return '6M';
+      case TimeFilter.ytd:       return 'YTD';
     }
   }
 
