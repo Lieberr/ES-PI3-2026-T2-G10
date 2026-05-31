@@ -67,8 +67,6 @@ class _CriarOfertaPageState extends State<CriarOfertaPage> {
   double get _valorTotal => _quantidade * _valorUnitario;
 
   Future<void> criarOferta() async {
-    debugPrint('startup id: ${widget.startup['id']}');
-    debugPrint('startup map: ${widget.startup}');
     if (_quantidade <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Informe uma quantidade válida.')),

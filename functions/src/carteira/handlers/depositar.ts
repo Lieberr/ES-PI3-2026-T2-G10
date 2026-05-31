@@ -1,14 +1,14 @@
 // Feito por Leonardo Dionel RA: 25010092
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
-import { Timestamp } from "firebase-admin/firestore";
+import {Timestamp} from "firebase-admin/firestore";
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 export const depositar = onCall(async (request) => {
-  const { valor } = request.data;
+  const {valor} = request.data;
 
   if (typeof valor !== "number" || valor <= 0) {
     throw new HttpsError("invalid-argument", "Valor inválido.");
@@ -34,5 +34,5 @@ export const depositar = onCall(async (request) => {
     descricao: "Depósito via app",
   });
 
-  return { mensagem: "Depósito realizado com sucesso." };
+  return {mensagem: "Depósito realizado com sucesso."};
 });

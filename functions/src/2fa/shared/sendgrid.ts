@@ -1,7 +1,6 @@
 import sgMail from "@sendgrid/mail";
 
 
-
 /**
  * Envia o código 2FA para o email do usuário por SendGrid.
  * @param {string} email Email do destinatário.
@@ -11,7 +10,8 @@ export async function enviarCodigoEmail(
   email: string,
   code: string,
 ) {
-  sgMail.setApiKey("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");
+  sgMail.setApiKey(
+    "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");
 
   await sgMail.send({
     to: email,

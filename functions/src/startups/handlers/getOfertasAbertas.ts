@@ -45,9 +45,9 @@ export const getOfertasAbertas = onCall(
     const ofertaComNome = await Promise.all(
       ofertasFiltradas.map(async (oferta) => {
         const uidCriador = oferta.uidComprador ?? oferta.uidVendedor;
-        const usuario = uidCriador
-        ? await buscarUsuarioPorUid(uid)
-        : null;
+        const usuario = uidCriador ?
+          await buscarUsuarioPorUid(uidCriador) :
+          null;
         return {
           ...oferta,
           nomeCriador: usuario?.nomeCompleto ?? "Usuário desconhecido",
