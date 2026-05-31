@@ -4,6 +4,8 @@ import {CallableRequest, HttpsError, onCall} from "firebase-functions/v2/https";
 import {db} from "../../shared/firebase";
 import {buscarStartupsPorId} from "../repositories/startupRepository";
 import {TransacaoSecundaria} from "../../carteira/types/transacao";
+import {buscarUsuarioPorUid}
+  from "../../usuarios/repositories/usuarioRepository";
 
 export const getOfertasAbertas = onCall(
   async (request:CallableRequest<{startupId: string}>) => {
@@ -36,13 +38,23 @@ export const getOfertasAbertas = onCall(
       .orderBy("criadaEm", "desc")
       .get();
 
-    const ofertas = snap.docs
-      .map((doc) => ({
-        id: doc.id,
-        ...doc.data() as unknown as TransacaoSecundaria}))
-      .filter((oferta) =>
-        oferta.uidComprador !== uid && oferta.uidVendedor !== uid);
+    const ofertasFiltradas = snap.docs
+      .map((doc) => ({id: doc.id, ...doc.data() as TransacaoSecundaria}))
+      .filter((o) => o.uidComprador !== uid && o.uidVendedor !== uid);
 
-    return {ofertas};
+    const ofertaComNome = await Promise.all(
+      ofertasFiltradas.map(async (oferta) => {
+        const uidCriador = oferta.uidComprador ?? oferta.uidVendedor;
+        const usuario = uidCriador
+        ? await buscarUsuarioPorUid(uid)
+        : null;
+        return {
+          ...oferta,
+          nomeCriador: usuario?.nomeCompleto ?? "Usuário desconhecido",
+        };
+      })
+    );
+
+    return {ofertas: ofertaComNome};
   }
 );
