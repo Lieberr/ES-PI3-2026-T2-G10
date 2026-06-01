@@ -1,5 +1,5 @@
-//Feito por Gustavo Lieb RA: 24023376
-//carteira digital feito por Yuri Soares da Silva RA: 25008703
+// Feito por Gustavo Lieb RA: 24023376
+//carteira digital e historico de transacoes feito por Yuri Soares da Silva RA: 25008703
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -81,34 +81,13 @@ class _ProfilePageState extends State<ProfilePage> {
         .snapshots();
   }
 
-  // ─── Logout ──────────────────────────────────────────────────────────────
-
-  Future<void> _sair() async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sair da conta'),
-        content: const Text('Tem certeza que deseja sair?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Sair', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmar == true) {
-      await FirebaseAuth.instance.signOut();
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-    }
+  Stream<QuerySnapshot> _tokensStream() {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    return FirebaseFirestore.instance
+        .collection('mercadoPrimario')
+        .where('uid', isEqualTo: uid)
+        .orderBy('data', descending: true)
+        .snapshots();
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -133,168 +112,243 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 40,
-          ),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.65,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 8, 0),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.receipt_long_outlined,
-                        color: Color(0xff2453ff),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        "Histórico",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+        return DefaultTabController(
+          length: 2,
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            insetPadding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 40),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.65,
+              child: Column(
+                children: [
+                  // ── Cabeçalho ──
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 8, 0),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.receipt_long_outlined,
+                            color: Color(0xff2453ff)),
+                        const SizedBox(width: 10),
+                        const Text(
+                          "Histórico",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close, color: Colors.grey),
-                      ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── Abas ──
+                  const TabBar(
+                    indicatorColor: Color(0xff2453ff),
+                    labelColor: Color(0xff2453ff),
+                    unselectedLabelColor: Colors.grey,
+                    tabs: [
+                      Tab(text: "Saldo"),
+                      Tab(text: "Tokens"),
                     ],
                   ),
-                ),
-                const Divider(height: 20),
-                Expanded(
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: _movimentacoesStream(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return const Center(
-                          child: Text("Erro ao carregar histórico."),
-                        );
-                      }
-                      final docs = snapshot.data?.docs ?? [];
-                      if (docs.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.receipt_long_outlined,
-                                size: 48,
-                                color: Colors.grey.shade400,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                "Nenhuma movimentação ainda.",
-                                style: TextStyle(
-                                  color: Colors.grey.shade500,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                      return ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        itemCount: docs.length,
-                        itemBuilder: (context, index) {
-                          final data =
-                              docs[index].data() as Map<String, dynamic>;
-                          final tipo = data['tipo'] as String? ?? '';
-                          final valor =
-                              (data['valor'] as num?)?.toDouble() ?? 0.0;
-                          final timestamp = data['realizadoEm'] as Timestamp?;
-                          final isDeposito = tipo == 'deposito';
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xfff5f6fa),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(14),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: isDeposito
-                                          ? Colors.green.withOpacity(0.1)
-                                          : Colors.red.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Icon(
-                                      isDeposito
-                                          ? Icons.arrow_downward_rounded
-                                          : Icons.arrow_upward_rounded,
-                                      color: isDeposito
-                                          ? Colors.green
-                                          : Colors.red,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          isDeposito ? "Depósito" : "Saque",
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          _formatarData(timestamp),
-                                          style: TextStyle(
-                                            color: Colors.grey.shade400,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    "${isDeposito ? '+' : '-'} ${_formatarMoeda(valor)}",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      color: isDeposito
-                                          ? Colors.green
-                                          : Colors.red,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
+                  // ── Conteúdo das abas ──
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        _listaMovimentacoes(),
+                        _listaTokens(),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
       },
     );
   }
+
+  // ── Aba Saldo ──
+  Widget _listaMovimentacoes() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _movimentacoesStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return const Center(child: Text("Erro ao carregar."));
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+
+        if (docs.isEmpty) {
+          return _listaVazia("Nenhuma movimentação ainda.");
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final tipo = data['tipo'] as String? ?? '';
+            final valor = (data['valor'] as num?)?.toDouble() ?? 0.0;
+            final timestamp = data['realizadoEm'] as Timestamp?;
+            final isDeposito = tipo == 'deposito';
+
+            return _itemCard(
+              icone: isDeposito
+                  ? Icons.arrow_downward_rounded
+                  : Icons.arrow_upward_rounded,
+              corIcone: isDeposito ? Colors.green : Colors.red,
+              titulo: isDeposito ? "Depósito" : "Saque",
+              subtitulo: _formatarData(timestamp),
+              valor: "${isDeposito ? '+' : '-'} ${_formatarMoeda(valor)}",
+              corValor: isDeposito ? Colors.green : Colors.red,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ── Aba Tokens ──
+  Widget _listaTokens() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _tokensStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return const Center(child: Text("Erro ao carregar."));
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+
+        if (docs.isEmpty) {
+          return _listaVazia("Nenhuma transação de tokens ainda.");
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final tipo = data['tipo'] as String? ?? '';
+            final startupId = data['startupId'] as String? ?? '';
+            final quantidade = (data['quantidade'] as num?)?.toInt() ?? 0;
+            final valorTotal = (data['valorTotal'] as num?)?.toDouble() ?? 0.0;
+            final valorUnitario =
+                (data['valorUnitario'] as num?)?.toDouble() ?? 0.0;
+            final timestamp = data['data'] as Timestamp?;
+            final isCompra = tipo == 'compra';
+
+            return _itemCard(
+              icone: isCompra
+                  ? Icons.trending_up_rounded
+                  : Icons.trending_down_rounded,
+              corIcone: isCompra ? Colors.green : Colors.red,
+              titulo: "${isCompra ? 'Compra' : 'Venda'} · $startupId",
+              subtitulo:
+                  "$quantidade token${quantidade > 1 ? 's' : ''} · R\$ ${valorUnitario.toStringAsFixed(2).replaceAll('.', ',')} cada\n${_formatarData(timestamp)}",
+              valor:
+                  "${isCompra ? '-' : '+'} ${_formatarMoeda(valorTotal)}",
+              corValor: isCompra ? Colors.red : Colors.green,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ── Card reutilizável ──
+  Widget _itemCard({
+    required IconData icone,
+    required Color corIcone,
+    required String titulo,
+    required String subtitulo,
+    required String valor,
+    required Color corValor,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xfff5f6fa),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: corIcone.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icone, color: corIcone, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titulo,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitulo,
+                    style: TextStyle(
+                        color: Colors.grey.shade500, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              valor,
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: corValor),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Estado vazio ──
+  Widget _listaVazia(String mensagem) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.receipt_long_outlined,
+              size: 48, color: Colors.grey.shade400),
+          const SizedBox(height: 12),
+          Text(
+            mensagem,
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 15),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   // ─── SAQUE ────────────────────────────────────────────────────────────────
 
