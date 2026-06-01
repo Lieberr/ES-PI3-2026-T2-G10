@@ -1,5 +1,8 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Script local para popular histórico de preços simulado das startups.
+// Usa service account para escrita direta no Firestore.
+
 import {initializeApp, cert} from "firebase-admin/app";
 import {readFileSync} from "fs";
 

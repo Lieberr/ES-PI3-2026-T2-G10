@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Camada de acesso ao mercado secundário (ofertas P2P na coleção mercadoSecundario).
+
 import {Timestamp} from "firebase-admin/firestore";
 import {TransacaoSecundaria} from "../../carteira/types/transacao";
 import {db} from "../../shared/firebase";

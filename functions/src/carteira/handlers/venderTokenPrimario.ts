@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Vende tokens de volta à startup no mercado primário (devolve tokens disponíveis).
+
 import {
   CallableRequest, HttpsError, onCall,
 } from "firebase-functions/v2/https";
@@ -64,6 +66,7 @@ export const venderTokenPrimario = onCall(
       throw new HttpsError("invalid-argument", "Tokens insuficiente");
     }
 
+    // Transação atômica: credita saldo, reduz tokens e devolve ao estoque da startup.
     await db.runTransaction(async (transaction) => {
       const carteiraRef = db.collection("carteiras").doc(uid);
       const tokenRef = db.collection("carteiras")

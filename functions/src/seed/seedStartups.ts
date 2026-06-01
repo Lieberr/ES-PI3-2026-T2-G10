@@ -1,5 +1,8 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Script local para inserir startups de exemplo no Firestore.
+// Usa service account para escrita direta fora do runtime das Cloud Functions.
+
 import {initializeApp, cert} from "firebase-admin/app";
 import {readFileSync} from "fs";
 
@@ -13,6 +16,7 @@ initializeApp({credential: cert(serviceAccount)});
 import {Startup} from "../startups/types/startup";
 import {db} from "../shared/firebase";
 
+// Lista fixa de startups usadas para desenvolvimento e demonstração.
 const startups: Startup[] = [
   {
     id: "ST001",

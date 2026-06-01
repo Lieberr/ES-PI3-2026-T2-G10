@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Camada de acesso à coleção startups no Firestore.
+
 import {Startup} from "../types/startup";
 import {db} from "../../shared/firebase";
 

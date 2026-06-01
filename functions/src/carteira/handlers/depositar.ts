@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Credita saldo na carteira do usuário autenticado.
+
 import {onCall, CallableRequest, HttpsError} from "firebase-functions/v2/https";
 import {AtualizarSaldoInput} from "../types/carteira";
 import {
@@ -10,6 +12,7 @@ import {Timestamp} from "firebase-admin/firestore";
 export const depositar = onCall(
   async (request:CallableRequest<AtualizarSaldoInput>) => {
     const data = request.data;
+    // Valor deve ser positivo.
     if (data.valor < 0) {
       throw new HttpsError(
         "invalid-argument",
@@ -37,6 +40,7 @@ export const depositar = onCall(
     const novoSaldo = carteira.saldo + valor;
     await atualizarSaldo(uid, novoSaldo);
 
+    // Histórico de operação para gráfico de evolução do saldo.
     await registrarOperacao({
       uid,
       valor,

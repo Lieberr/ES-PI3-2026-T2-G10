@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Consultas de startups: listagem, detalhe por ID e filtro por estágio.
+
 import {CallableRequest, HttpsError, onCall} from
   "firebase-functions/v2/https";
 import {
@@ -88,6 +90,7 @@ export const getStartupById = onCall(
       );
     }
 
+    // Carrega startup e tokens do usuário para determinar permissões de investidor.
     const [startup, tokens] = await Promise.all([
       buscarStartupsPorId(id),
       buscarTokenUsuario(uid),
@@ -100,6 +103,7 @@ export const getStartupById = onCall(
     const tokenDaStartup = tokens?.find((t) => t.startupId === id);
     const isInvestor = (tokenDaStartup?.quantidade ?? 0) > 0;
 
+    // Flags consumidas pelo Flutter para habilitar balcão e perguntas privadas.
     return {
       startup,
       isInvestor,

@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Retorna saldo e tokens do usuário autenticado.
+
 import {CallableRequest, HttpsError, onCall} from
   "firebase-functions/v2/https";
 import {buscarCarteira, buscarTokenUsuario}
@@ -15,6 +17,7 @@ export const getCarteira = onCall(
       );
     }
 
+    // Busca carteira e tokens em paralelo para reduzir latência.
     const [carteira, tokens] = await Promise.all([
       buscarCarteira(uid),
       buscarTokenUsuario(uid),

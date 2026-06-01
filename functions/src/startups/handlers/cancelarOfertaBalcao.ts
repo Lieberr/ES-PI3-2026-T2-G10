@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Cancela oferta aberta criada pelo próprio usuário (libera saldo ou tokens reservados).
+
 import {CallableRequest, HttpsError, onCall} from "firebase-functions/v2/https";
 import {
   buscarCarteira,
@@ -49,6 +51,7 @@ export const cancelarOfertaBalcao = onCall(
     }
 
     if (oferta.tipo === "compra") {
+      // Devolve saldo reservado ao saldo disponível ao cancelar oferta de compra.
       const novoSaldo = carteira.saldo + oferta.valorTotal;
       const novoSaldoReservado = carteira.saldoReservado - oferta.valorTotal;
 
@@ -70,6 +73,7 @@ export const cancelarOfertaBalcao = onCall(
     }
 
     if (oferta.tipo === "venda") {
+      // Devolve tokens da reserva para quantidade disponível ao cancelar venda.
       const tokenAtual = token.find((t) => t.startupId === oferta.startupId);
       const quantidadeAtual = tokenAtual?.quantidade?? 0;
       const tokenReservado = tokenAtual?.quantidadeReservada?? 0;

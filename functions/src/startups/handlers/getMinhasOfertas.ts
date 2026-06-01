@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Lista ofertas do mercado secundário criadas ou aceitas pelo usuário autenticado.
+
 import {CallableRequest, HttpsError, onCall} from
   "firebase-functions/v2/https";
 import {TransacaoSecundaria}
@@ -18,6 +20,7 @@ export const getMinhasOfertas = onCall(
       );
     }
 
+    // Busca ofertas onde o usuário é comprador ou vendedor.
     const [comoComprador, comoVendedor] = await Promise.all([
       db.collection("mercadoSecundario")
         .where("uidComprador", "==", uid)
@@ -41,6 +44,7 @@ export const getMinhasOfertas = onCall(
 
     const ofertasComNomes = await Promise.all(
       todasOfertas.map(async (oferta) => {
+        // Enriquece oferta com nome completo de comprador e vendedor.
         const [comprador, vendedor] = await Promise.all([
           oferta.uidComprador ?
             buscarUsuarioPorUid(oferta.uidComprador) :

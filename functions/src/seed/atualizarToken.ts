@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Script local para atualizar manualmente o valor do token de uma startup.
+// Usa credencial de service account para acesso admin fora do ambiente Cloud Functions.
 import {initializeApp, cert} from "firebase-admin/app";
 import {readFileSync} from "fs";
 
@@ -22,6 +24,7 @@ async function atualizarToken(): Promise<void> {
   const startupRef = db.collection("startups").doc(STARTUP_ID);
   const historicoRef = startupRef.collection("historicoPrecos").doc();
 
+  // Atualiza preço atual e grava novo ponto no histórico em uma única transação.
   await db.runTransaction(async (transaction) => {
     transaction.update(startupRef, {valorToken: NOVO_VALOR});
     transaction.set(historicoRef, {

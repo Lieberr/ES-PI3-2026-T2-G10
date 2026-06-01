@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Calcula resumo do portfólio: valor investido, valor atual e variação por startup.
+
 import {CallableRequest, HttpsError, onCall} from
   "firebase-functions/v2/https";
 import {buscarTokenUsuario}
