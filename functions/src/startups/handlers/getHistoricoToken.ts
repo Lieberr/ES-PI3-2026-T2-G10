@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Retorna histórico de preços e variações percentuais por período.
+
 import {CallableRequest, HttpsError, onCall} from
   "firebase-functions/v2/https";
 import {Timestamp} from "firebase-admin/firestore";
@@ -38,6 +40,7 @@ export const getHistoricoToken = onCall(
 
     const agora = new Date();
 
+    // Limites de data para cada janela de variação (1d, 7d, 30d, 180d, YTD).
     const inicioDiario = new Date(agora);
     inicioDiario.setDate(agora.getDate() - 1);
 
@@ -78,6 +81,7 @@ export const getHistoricoToken = onCall(
             .orderBy("data", "asc")
             .get(),
         ]);
+    // Calcula variação % entre primeiro e último preço do período consultado.
     const calcularVariacao = (
       snap: FirebaseFirestore.QuerySnapshot
     ): number => {

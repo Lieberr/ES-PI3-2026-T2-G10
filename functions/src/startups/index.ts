@@ -1,6 +1,8 @@
 // Feito por Gustavo Lieb RA: 24023376
 // Feito por Leonardo Dionel RA: 25010092
 
+// Módulo de startups: listagem, mercado secundário (balcão) e histórico de preços.
+
 export {getStartups, getStartupById, getStartupPorEstagio}
   from "./handlers/getStartups";
 

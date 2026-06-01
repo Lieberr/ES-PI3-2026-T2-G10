@@ -1,5 +1,7 @@
 // Feito por Gustavo lieb Ra: 24023376
 
+// Reconstrói evolução do saldo a partir de depósitos e saques registrados.
+
 import {CallableRequest, HttpsError, onCall} from "firebase-functions/v2/https";
 import {db} from "../../shared/firebase";
 
@@ -28,6 +30,7 @@ export const getHistoricoSaldo = onCall(
       .orderBy("realizadoEm", "asc")
       .get();
 
+    // Une movimentações e operações em ordem cronológica.
     const todasOps = [
       ...snapMovimentacoes.docs.map((doc) => doc.data()),
       ...snapOperacoes.docs.map((doc) => doc.data()),
@@ -37,6 +40,7 @@ export const getHistoricoSaldo = onCall(
       return {pontos: []};
     }
 
+    // Percorre operações acumulando saldo para cada ponto do gráfico.
     let saldoAcumulado = 0;
     const pontos: {label: string; saldo: number}[] = [];
 

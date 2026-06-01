@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Cloud Function callable: cadastra usuário no Auth, Firestore e cria carteira inicial.
+
 import {onCall, CallableRequest, HttpsError} from "firebase-functions/v2/https";
 import {Timestamp} from "firebase-admin/firestore";
 import {CadastrarUsuarioInput} from "../types/usuario";

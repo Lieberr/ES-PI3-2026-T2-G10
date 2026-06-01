@@ -1,5 +1,7 @@
 // Feito por: Matheus Henrique Portugal Narducci RA: 25008976
 
+// Camada de persistência de perguntas na subcoleção startups/{id}/perguntas.
+
 import {db} from "../../shared/firebase";
 import {Pergunta} from "../types/pergunta";
 import {Timestamp} from "firebase-admin/firestore";

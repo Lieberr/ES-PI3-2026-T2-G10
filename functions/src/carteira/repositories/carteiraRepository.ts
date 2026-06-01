@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Camada de persistência da carteira, tokens e transações do mercado primário.
+
 import {Carteira, Operacao} from "../types/carteira";
 import {db} from "../../shared/firebase";
 import {Timestamp} from "firebase-admin/firestore";

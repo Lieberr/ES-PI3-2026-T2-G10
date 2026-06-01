@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Camada de persistência de usuários na coleção usuarios.
+
 import {Usuario} from "../types/usuario";
 import {db} from "../../shared/firebase";
 

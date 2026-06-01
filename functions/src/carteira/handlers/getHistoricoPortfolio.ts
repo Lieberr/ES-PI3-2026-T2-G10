@@ -1,5 +1,7 @@
 // Feito Por Gustavo Lieb Figueira RA: 24023376
 
+// Monta série temporal do valor total do portfólio com base no histórico de preços.
+
 import {CallableRequest, HttpsError, onCall} from "firebase-functions/v2/https";
 import {buscarTokenUsuario} from "../repositories/carteiraRepository";
 import {db} from "../../shared/firebase";

@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Funções de validação de dados de cadastro de usuário.
+
 /**
  * Verifica se o CPF tem 11 dígitos numéricos.
  * Aceita CPF com ou sem formatação (ex: 123.456.789-09).

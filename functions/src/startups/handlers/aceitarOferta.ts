@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Aceita oferta aberta no mercado secundário (balcão P2P entre usuários).
+
 import {CallableRequest, HttpsError, onCall} from
   "firebase-functions/v2/https";
 import {
@@ -31,6 +33,7 @@ export const aceitarOferta = onCall(
       );
     }
 
+    // Só ofertas com status "aberta" podem ser aceitas.
     if (oferta.status !== "aberta") {
       throw new HttpsError(
         "failed-precondition",

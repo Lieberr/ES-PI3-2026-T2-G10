@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Debita saldo da carteira do usuário autenticado.
+
 import {onCall, CallableRequest, HttpsError} from "firebase-functions/v2/https";
 import {AtualizarSaldoInput} from "../types/carteira";
 import {
@@ -32,6 +34,7 @@ export const sacar = onCall(
         "Saldo insuficiente para realizar o saque");
     }
 
+    // Debita saldo e registra operação de saque no histórico.
     const novoSaldo = carteira.saldo - valor;
     await atualizarSaldo(uid, novoSaldo);
 

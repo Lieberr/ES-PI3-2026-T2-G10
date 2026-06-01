@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Cria oferta de compra ou venda no mercado secundário (balcão).
+
 import {CallableRequest, HttpsError, onCall} from
   "firebase-functions/v2/https";
 import {
@@ -50,6 +52,7 @@ export const criarOfertaBalcao = onCall(
     const tokens = await buscarTokenUsuario(uid) ?? [];
     const valorUnitario = startup.valorToken;
     const valorTotal = valorUnitario * quantidade;
+    // Oferta de compra: reserva saldo até a oferta ser aceita ou cancelada.
     if (tipo === "compra") {
       if (valorTotal > carteira.saldo) {
         throw new HttpsError(
@@ -80,6 +83,7 @@ export const criarOfertaBalcao = onCall(
       });
       return {mensagem: "Oferta de compra realizada com sucesso."};
     }
+    // Oferta de venda: move tokens para quantidadeReservada.
     if (tipo === "venda") {
       const tokenAtual = tokens.find((t) =>
         t.startupId === data.startupId

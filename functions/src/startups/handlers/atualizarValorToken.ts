@@ -1,5 +1,7 @@
 // Feito por Leonardo Dionel RA: 25010092
 
+// Atualiza valor do token e registra ponto no histórico de preços.
+
 import {CallableRequest, HttpsError, onCall} from
   "firebase-functions/v2/https";
 import {Timestamp} from "firebase-admin/firestore";
