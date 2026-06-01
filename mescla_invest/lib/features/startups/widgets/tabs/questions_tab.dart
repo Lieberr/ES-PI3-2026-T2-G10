@@ -1,3 +1,5 @@
+// Feito por: Matheus Henrique Portugal Narducci RA: 25008976
+
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
@@ -29,6 +31,7 @@ class _QuestionsTabState extends State<QuestionsTab> {
   @override
   void initState() {
     super.initState();
+
     carregarPerguntas();
   }
 
@@ -221,11 +224,13 @@ class _QuestionsTabState extends State<QuestionsTab> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
+
         border: Border.all(color: const Color(0xFFE5E7EB)),
+
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
@@ -247,6 +252,7 @@ class _QuestionsTabState extends State<QuestionsTab> {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827),
                   ),
                 ),
               ),

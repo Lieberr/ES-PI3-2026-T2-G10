@@ -150,6 +150,7 @@ class _HomePageState extends State<HomePage> {
                             builder: (_) => StartupDetailsPage(startup: s),
                           ),
                         );
+
                         carregarStartups();
                       },
 
