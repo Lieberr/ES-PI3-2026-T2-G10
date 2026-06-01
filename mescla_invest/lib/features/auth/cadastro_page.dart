@@ -1,6 +1,7 @@
 //Feito por Gustavo Lieb RA: 24023376
 
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -100,6 +101,11 @@ class _CadastroPageState extends State<CadastroPage> {
         'telefone': telefoneController.text.trim(),
         'senha': senhaController.text,
       });
+
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: senhaController.text,
+      );
 
       // log pra confirmar que funcionou
       print('CADASTRO OK: ${result.data}');

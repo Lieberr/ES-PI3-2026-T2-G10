@@ -80,9 +80,6 @@ class _BalcaoStartupPageState extends State<BalcaoStartupPage>
         setState(() {
           _minhasOfertas = lista.where((o) => o['status'] == 'aberta').toList();
           _historico = lista.where((o) => o['status'] != 'aberta').toList();
-          debugPrint(
-            'historico[0]: ${_historico.isNotEmpty ? _historico[0] : "vazio"}',
-          );
           _carregandoHistorico = false;
         });
       }
