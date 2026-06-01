@@ -20,7 +20,8 @@ class OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final descricao = startup['descricao'] ?? 'Descrição não disponível';
+    final sumarioExecutivo = startup['sumarioExecutivo'] ?? 'Descrição não disponível';
+    final planoNegocios = startup['planoNegocios'] ?? 'Plano de negócios não disponível';
     final total = (startup['tokensEmitidos'] ?? 0) as num;
     final disponiveis = (startup['tokensDisponiveis'] ?? 0) as num;
     final percentual = total > 0 ? (disponiveis / total * 100) : 0;
@@ -61,6 +62,23 @@ class OverviewTab extends StatelessWidget {
         ),
 
         const SizedBox(height: 24),
+
+        // sumário executivo
+        const Text(
+          'Sumário Executivo',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          sumarioExecutivo,
+          style: const TextStyle(
+            fontSize: 14,
+            height: 1.6,
+            color: Color(0xFF4B5563),
+          ),
+        ),
+
+        const SizedBox(height: 0),
 
         // botões de compra e venda — mercado primário (todos podem)
         if (canTradeTokens) ...[
@@ -129,27 +147,30 @@ class OverviewTab extends StatelessWidget {
           const SizedBox(height: 16),
         ],
 
-        const Text(
-          'Sumário Executivo',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          descricao,
-          style: const TextStyle(
-            fontSize: 16,
-            height: 1.6,
-            color: Color(0xFF4B5563),
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
         _tokenCard(total, disponiveis, percentual),
 
         const SizedBox(height: 20),
 
         _mentorCard(mentores),
+
+        const SizedBox(height: 20),
+
+        // plano de negócios
+        const Text(
+          'Plano de Negócios',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          planoNegocios,
+          style: const TextStyle(
+            fontSize: 14,
+            height: 1.6,
+            color: Color(0xFF4B5563),
+          ),
+        ),
+
+        const SizedBox(height: 16),
 
         // botão do balcão — só para investidores
         if (canAccessBalcao) ...[
