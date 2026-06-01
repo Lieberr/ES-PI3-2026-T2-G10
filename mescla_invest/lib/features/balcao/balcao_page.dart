@@ -29,6 +29,16 @@ class _BalcaoPageState extends State<BalcaoPage> {
     carregarStartups();
   }
 
+  // recarrega automaticamente quando volta para esta tela
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent) {
+      carregarStartups();
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
