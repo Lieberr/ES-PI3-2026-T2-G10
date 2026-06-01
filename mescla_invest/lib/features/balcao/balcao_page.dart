@@ -1,10 +1,10 @@
 //Feito por Gustavo Lieb RA: 24023376
 
-
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'balcao_startup_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BalcaoPage extends StatefulWidget {
   const BalcaoPage({super.key});
@@ -43,13 +43,32 @@ class _BalcaoPageState extends State<BalcaoPage> {
         return;
       }
 
-      final callable = _functions.httpsCallable('getStartups');
-      final result = await callable();
-      final List data = result.data['startups'] ?? [];
+      // busca todas as startups e os tokens do usuário em paralelo
+      final results = await Future.wait([
+        _functions.httpsCallable('getStartups').call(),
+        FirebaseFirestore.instance
+            .collection('carteiras')
+            .doc(user.uid)
+            .collection('tokens')
+            .get(),
+      ]);
+
+      final todasStartups =
+          (results[0] as HttpsCallableResult).data['startups'] as List;
+      final tokensSnap = results[1] as QuerySnapshot;
+
+      // pega só os startupIds onde o usuário tem tokens > 0
+      final startupIdsInvestidor = tokensSnap.docs
+          .where((doc) => ((doc.data() as Map)['quantidade'] ?? 0) > 0)
+          .map((doc) => doc.id)
+          .toSet();
 
       if (mounted) {
         setState(() {
-          _startups = data.map((e) => Map<String, dynamic>.from(e)).toList();
+          _startups = todasStartups
+              .map((e) => Map<String, dynamic>.from(e))
+              .where((s) => startupIdsInvestidor.contains(s['id']))
+              .toList();
           _carregando = false;
         });
       }

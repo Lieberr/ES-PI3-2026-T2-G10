@@ -35,9 +35,7 @@ class StartupCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
 
-        border: Border.all(
-          color: const Color(0xFFE5E5E5),
-        ),
+        border: Border.all(color: const Color(0xFFE5E5E5)),
 
         boxShadow: [
           BoxShadow(
@@ -51,12 +49,10 @@ class StartupCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           // TOPO
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               ClipRRect(
                 borderRadius: BorderRadius.circular(14),
                 child: Image.network(
@@ -73,10 +69,8 @@ class StartupCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     Row(
                       children: [
-
                         Expanded(
                           child: Text(
                             title,
@@ -122,22 +116,24 @@ class StartupCard extends StatelessWidget {
                         horizontal: 10,
                         vertical: 4,
                       ),
-
                       decoration: BoxDecoration(
-                        color: status == 'Em expansão'
+                        color: status == 'Nova'
+                            ? const Color(0xFFDBEAFE)
+                            : status == 'Em expansão'
                             ? const Color(0xFFDDF5E5)
-                            : const Color(0xFFFFE7CC),
+                            : const Color(0xFFEDE9FE),
                         borderRadius: BorderRadius.circular(10),
                       ),
-
                       child: Text(
                         status,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: status == 'Em expansão'
+                          color: status == 'Nova'
+                              ? const Color(0xFF2563EB)
+                              : status == 'Em expansão'
                               ? const Color(0xFF19A34A)
-                              : const Color(0xFFE27C16),
+                              : const Color(0xFF7C3AED),
                         ),
                       ),
                     ),
@@ -164,18 +160,13 @@ class StartupCard extends StatelessWidget {
           // INFO
           Row(
             children: [
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     const Text(
                       'Valor do Token',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
-                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                     ),
 
                     const SizedBox(height: 2),
@@ -196,13 +187,9 @@ class StartupCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-
                     const Text(
                       'Capital Aportado',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
-                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                     ),
 
                     const SizedBox(height: 2),
@@ -230,9 +217,7 @@ class StartupCard extends StatelessWidget {
               value: progress,
               minHeight: 7,
               backgroundColor: const Color(0xFFE5E7EB),
-              valueColor: const AlwaysStoppedAnimation(
-                Color(0xFF2563EB),
-              ),
+              valueColor: const AlwaysStoppedAnimation(Color(0xFF2563EB)),
             ),
           ),
 
@@ -241,10 +226,7 @@ class StartupCard extends StatelessWidget {
           Center(
             child: Text(
               tokens,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF6B7280),
-              ),
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
             ),
           ),
         ],

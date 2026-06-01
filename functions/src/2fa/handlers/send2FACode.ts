@@ -6,9 +6,11 @@ import {
   buscarCodigo2FA,
 } from "../repositories/twofaRepository";
 import * as crypto from "crypto";
+import { sendgridKey } from "../shared/sendgrid";
 
 
 export const send2FACode = onCall(
+  {secrets: [sendgridKey]},
   async (request: CallableRequest<Record<string, unknown>>) => {
     const uid = request.auth?.uid;
     const email =

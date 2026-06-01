@@ -32,7 +32,7 @@ A equipe é composta por **5 integrantes**, e o desenvolvimento foi dividido em 
 
 ## 🧠 Mapa Mental MesclaInvest
 
-![Mapa mental MesclaInvest Preview](.mescla_invest/img/Mapa_mental_MesclaInvest.png)
+![Mapa mental MesclaInvest Preview](mescla_invest/img/Mapa_mental_MesclaInvest.png)
 
 ## 💻 Issues Iniciais do Projeto
 
@@ -67,3 +67,85 @@ A equipe é composta por **5 integrantes**, e o desenvolvimento foi dividido em 
 - Criar estrutura inicial do backend
 - Definir endpoints principais da API
 - Configurar ambiente de desenvolvimento
+
+## 📱 Features Implementadas
+
+### Sistema de Autenticação
+- Tela para cadastro com nome completo, email, CPF, telefone, senha e confirmação de senha;
+- Checagens de CPF e email para contas com dados iguais não serem cadastradas;
+- Senha que exige: 8 caracteres, letra maiúscula e números;
+- Login pedindo email e senha que, caso algum dado esteja errado, mostra um erro;
+- Recuperação de senha via email;
+- Login persistido localmente;
+- Autenticação 2FA por email.
+
+### Catálogo de Startups
+- Lista de todas as startups com detalhes:
+    - Nome e foto;
+    - Breve descrição;
+    - Estado (expansão ou operação);
+    - Valor do token;
+    - Capital aportado;
+    - Tokens disponíveis;
+    - Porcentagem de valorização.
+- Sistema de filtragem por estado: Todas, Nova, Em expansão ou Em operação;
+
+### Tela de Startup
+- Três categorias para se visualizar:
+- Visão geral:
+    - Gráfico de valorização de token;
+        - Filtragem por tempo (dia, semana, mês, semestre e ano).
+    - Valor do token;
+    - Capital aportado;
+    - Negociação de tokens (compra ou venda com a própria startup);
+    - Sumário executivo;
+    - Melhor detalhamento dos tokens;
+    - Lista de mentores.
+- Estrutura:
+    - Lista de sócios da startup com nome e participação societária.
+- Perguntas:
+    - Envio de perguntas para a startup;
+    - Envio de perguntas privadas caso seja investidor;
+    - Perguntas frequentes.
+
+### Balcão de Tokens
+- Lista com startups investidas e valor de seus tokens;
+- Busca por nome startup;
+- Ofertas de compra:
+    - Quantidade de tokens requeridos;
+    - Preço por token;
+    - Valor total oferecido;
+    - Nome do comprador.
+- Ofertas de venda:
+    - Quantidade de tokens oferecidos; 
+    - Preço por token;
+    - Valor total à dar;
+    - Nome do vendedor.
+- Método de criação de oferta tanto de venda quanto de compra;
+- Visualização de suas ofertas abertas com todos os dados e maneira de cancelá-las;
+- Histórico de compra e venda pelo balcão.
+
+### Portfólio
+- Valor total do portifólio com porcentagem de valorização;
+- Gráfico de evolução com filtragem de tempo (dia, semana, mês, semestre ou ano);
+- Lista de startups investidas e suas respectivas porcentagens de valorização e capital investido.
+
+### Perfil
+- Método para depositar e sacar, de maneira simulada;
+- Histórico de depósitos e saques com data e hora;
+- Método para alterar os dados pessoais da conta:
+    - Nome completo, email e telefone;
+    - CPF e senha são bloqueados por segurança.
+- Configuração de 2FA;
+- Opção de Logout.
+
+### Banco de Dados
+- Feito totalmente pelo Firebase;
+- Coleções particulares para cada usuário:
+    - Informações da conta;
+    - Saldo de tokens e reais;
+    - Histórico de compra e venda;
+- Coleções particulares para cada startup:
+    - Informações das startups;
+    - Histórico de valorização dos tokens;
+- Históricos de transações entre usuário/startup ou usuário/usuário;

@@ -9,6 +9,8 @@ import 'package:mescla_invest/features/auth/login_page.dart';
 import 'package:mescla_invest/features/auth/cadastro_page.dart';
 import 'package:mescla_invest/features/auth/recuperar_senha.dart';
 import 'package:mescla_invest/widgets/main_navigation.dart';
+import 'package:mescla_invest/features/perfil/tabs/editarDadosPessoais_page.dart';
+import 'package:mescla_invest/features/perfil/tabs/2FA_page.dart';
 
 
 void main() async {
@@ -54,7 +56,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/cadastro': (context) => const CadastroPage(),
         '/recuperar-senha': (context) => const RecuperarSenhaPage(),
-
+        '/dados-pessoais': (context) => const PersonalDataPage(),
+        '/2fa': (context) => const Email2FAPage(),
 
         '/main': (context) => const MainNavigation(),
       },

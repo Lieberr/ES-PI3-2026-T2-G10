@@ -1,6 +1,5 @@
 //Feito por Gustavo Lieb RA: 24023376
 
-
 import 'package:flutter/material.dart';
 import 'widgets/startup_card.dart';
 import 'startup_details_page.dart';
@@ -114,6 +113,8 @@ class _HomePageState extends State<HomePage> {
                     itemBuilder: (context) => [
                       const PopupMenuItem(value: 'todos', child: Text('Todos')),
 
+                      const PopupMenuItem(value: 'Nova', child: Text('Nova')),
+
                       const PopupMenuItem(
                         value: 'Em operação',
                         child: Text('Em operação'),
@@ -149,6 +150,7 @@ class _HomePageState extends State<HomePage> {
                             builder: (_) => StartupDetailsPage(startup: s),
                           ),
                         );
+
                         carregarStartups();
                       },
 
@@ -163,9 +165,27 @@ class _HomePageState extends State<HomePage> {
                             'R\$ ${_formatarReal(s['capitalAportado'] ?? 0)}',
                         tokens:
                             '${_formatarMilhar(s['tokensDisponiveis'] ?? 0)} tokens disponíveis',
-                        progress: 0.5,
-                        variation: '+0%',
-                        positive: true,
+                        progress: () {
+                          final emitidos =
+                              (s['tokensEmitidos'] as num?)?.toDouble() ?? 1;
+                          final disponiveis =
+                              (s['tokensDisponiveis'] as num?)?.toDouble() ?? 0;
+                          return emitidos > 0
+                              ? (disponiveis / emitidos).clamp(0.0, 1.0)
+                              : 0.0;
+                        }(),
+                        variation: () {
+                          final historico = (s['variacaoMensal'] as num?)
+                              ?.toDouble();
+                          if (historico == null) return '+0%';
+                          final sinal = historico >= 0 ? '+' : '';
+                          return '$sinal${historico.toStringAsFixed(1)}%';
+                        }(),
+                        positive: () {
+                          final historico =
+                              (s['variacaoMensal'] as num?)?.toDouble() ?? 0;
+                          return historico >= 0;
+                        }(),
                       ),
                     ),
                   );

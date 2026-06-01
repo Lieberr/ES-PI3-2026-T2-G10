@@ -3,11 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:mescla_invest/features/perfil/tabs/editarDadosPessoais_page.dart';
-import 'package:mescla_invest/features/perfil/tabs/2FA_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -31,20 +31,62 @@ class _ProfilePageState extends State<ProfilePage> {
     region: 'southamerica-east1',
   );
 
+  @override
+  void initState() {
+    super.initState();
+    _carregarStatus2FA();
+  }
+
+
+  Future<void> _carregarStatus2FA() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final doc = await FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(uid)
+            .get();
+
+    if (mounted) {
+      setState(() {
+        is2FAEnabled = doc.data()?['twofaEnabled'] == true;
+      });
+    }
+  }
+
+
+
   // ─── Streams ─────────────────────────────────────────────────────────────
 
+<<<<<<< HEAD
   // Retorna um stream com o saldo em tempo real do usuário logado
   Stream<double> _saldoStream() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return Stream.value(0.0); // Sem usuário, retorna 0
+=======
+  Stream<Map<String, double>> _carteiraStream() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null)
+      return Stream.value({'saldo': 0.0, 'saldoReservado': 0.0});
+>>>>>>> 18d62b95e33d087ef25a84a5577f8de94f5843e7
     return FirebaseFirestore.instance
         .collection('carteiras')
         .doc(user.uid)
         .snapshots()
-        .map((doc) => (doc.data()?['saldo'] as num?)?.toDouble() ?? 0.0);
+        .map(
+          (doc) => {
+            'saldo': (doc.data()?['saldo'] as num?)?.toDouble() ?? 0.0,
+            'saldoReservado':
+                (doc.data()?['saldoReservado'] as num?)?.toDouble() ?? 0.0,
+          },
+        );
   }
 
+<<<<<<< HEAD
   // Retorna um stream com as operações (depósitos/saques) do usuário, ordenadas por data
+=======
+  // todas as operações ficam em 'operacoes'
+>>>>>>> 18d62b95e33d087ef25a84a5577f8de94f5843e7
   Stream<QuerySnapshot> _movimentacoesStream() {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     return FirebaseFirestore.instance
@@ -379,7 +421,6 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       // Chama a Cloud Function 'sacar' passando o valor
       await _functions.httpsCallable('sacar').call({'valor': valor});
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -398,6 +439,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         );
       }
+<<<<<<< HEAD
     } catch (e) {
       // Erro inesperado genérico
       if (mounted) {
@@ -408,6 +450,8 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         );
       }
+=======
+>>>>>>> 18d62b95e33d087ef25a84a5577f8de94f5843e7
     }
   }
 
@@ -484,7 +528,6 @@ class _ProfilePageState extends State<ProfilePage> {
       try {
         // Chama a Cloud Function 'depositar' para registrar o saldo
         await _functions.httpsCallable('depositar').call({'valor': valor});
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -498,15 +541,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text("Erro ao depositar: ${e.message ?? e.code}"),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Erro inesperado: $e"),
               backgroundColor: Colors.red,
             ),
           );
@@ -548,17 +582,59 @@ class _ProfilePageState extends State<ProfilePage> {
     // Se confirmou cancelamento, o fluxo termina sem fazer nada
   }
 
-  // ─── IMAGEM DE PERFIL ─────────────────────────────────────────────────────
+  // ─── IMAGEM ───────────────────────────────────────────────────────────────
 
   // Abre a galeria do dispositivo e atualiza a foto de perfil localmente
   Future<void> pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _profileImage = File(image.path);
-      });
+  final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+  if (image == null) return;
+
+  try {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final ref = FirebaseStorage.instance.ref().child('fotoPerfil/$uid.jpg');
+
+    if (kIsWeb) {
+      // Web: usa bytes em vez de File
+      final bytes = await image.readAsBytes();
+      await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+    } else {
+      // Mobile: usa File normalmente
+      final file = File(image.path);
+      setState(() => _profileImage = file); // preview local só no mobile
+      await ref.putFile(file);
+    }
+
+    final url = await ref.getDownloadURL();
+
+    await FirebaseAuth.instance.currentUser!.updatePhotoURL(url);
+    await FirebaseAuth.instance.currentUser!.reload();
+    if (mounted) setState(() {});
+
+    await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .set({'fotoUrl': url}, SetOptions(merge: true));
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto atualizada com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  } catch (e) {
+    debugPrint('Erro ao salvar foto: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erro ao salvar foto.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+}
 
   // ─── BUILD ────────────────────────────────────────────────────────────────
 
@@ -599,14 +675,15 @@ class _ProfilePageState extends State<ProfilePage> {
                           // Avatar: mostra imagem local ou ícone padrão
                           CircleAvatar(
                             radius: 55,
-                            backgroundColor:
-                                const Color(0xff2453ff).withOpacity(0.15),
-                            backgroundImage: _profileImage != null
-                                ? FileImage(_profileImage!)
-                                : null,
-                            child: _profileImage == null
-                                ? const Icon(Icons.person,
-                                    size: 60, color: Color(0xff2453ff))
+                            backgroundColor: const Color(0xff2453ff).withOpacity(0.15),
+                            backgroundImage: FirebaseAuth.instance.currentUser?.photoURL != null
+                                ? NetworkImage(FirebaseAuth.instance.currentUser!.photoURL!)
+                                : (!kIsWeb && _profileImage != null
+                                    ? FileImage(_profileImage!)
+                                    : null) as ImageProvider?,
+                            child: FirebaseAuth.instance.currentUser?.photoURL == null &&
+                                    (kIsWeb || _profileImage == null)
+                                ? const Icon(Icons.person, size: 60, color: Color(0xff2453ff))
                                 : null,
                           ),
                           // Botão de câmera posicionado no canto inferior direito
@@ -621,8 +698,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                   color: Color(0xff2453ff),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.camera_alt,
-                                    color: Colors.white, size: 18),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
                               ),
                             ),
                           ),
@@ -633,13 +713,17 @@ class _ProfilePageState extends State<ProfilePage> {
                       Text(
                         user.displayName ?? 'Usuário',
                         style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.bold),
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 5),
                       Text(
                         user.email ?? '',
                         style: const TextStyle(
-                            color: Colors.grey, fontSize: 15),
+                          color: Colors.grey,
+                          fontSize: 15,
+                        ),
                       ),
                     ],
                   ),
@@ -659,6 +743,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         colors: [Color(0xff2453ff), Color(0xff1d3ed8)],
                       ),
                     ),
+<<<<<<< HEAD
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -697,38 +782,129 @@ class _ProfilePageState extends State<ProfilePage> {
 
                         // ── Botões de ação: Depositar e Sacar lado a lado ──
                         Row(
+=======
+                    child: StreamBuilder<Map<String, double>>(
+                      stream: _carteiraStream(),
+                      builder: (context, snapshot) {
+                        final saldo = snapshot.data?['saldo'] ?? 0.0;
+                        final saldoReservado =
+                            snapshot.data?['saldoReservado'] ?? 0.0;
+                        final carregando =
+                            snapshot.connectionState == ConnectionState.waiting;
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+>>>>>>> 18d62b95e33d087ef25a84a5577f8de94f5843e7
                           children: [
-                            Expanded(
-                              child: SizedBox(
-                                height: 50,
-                                child: ElevatedButton.icon(
-                                  onPressed: _iniciarAdicaoSaldo,
-                                  icon: const Icon(Icons.add),
-                                  label: const Text("Depositar"),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor:
-                                        const Color(0xff2453ff),
-                                  ),
-                                ),
+                            // saldo disponível
+                            const Text(
+                              "Saldo Disponível",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
                               ),
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: SizedBox(
-                                height: 50,
-                                child: ElevatedButton.icon(
-                                  onPressed: _iniciarSaque,
-                                  icon: const Icon(Icons.remove),
-                                  label: const Text("Sacar"),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                    foregroundColor: Colors.white,
+                            const SizedBox(height: 8),
+                            carregando
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : Text(
+                                    _formatarMoeda(saldo),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 34,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+
+                            // saldo reservado — só aparece se > 0
+                            if (!carregando && saldoReservado > 0) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.lock_outline,
+                                    color: Colors.redAccent,
+                                    size: 13,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    "${_formatarMoeda(saldoReservado)} em negociação",
+                                    style: const TextStyle(
+                                      color: Colors.redAccent,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+
+                            const SizedBox(height: 20),
+
+                            // botões depositar / sacar
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 50,
+                                    child: ElevatedButton.icon(
+                                      onPressed: _iniciarAdicaoSaldo,
+                                      icon: const Icon(Icons.add),
+                                      label: const Text("Depositar"),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                        foregroundColor: const Color(
+                                          0xff2453ff,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 50,
+                                    child: ElevatedButton.icon(
+                                      onPressed: _iniciarSaque,
+                                      icon: const Icon(Icons.remove),
+                                      label: const Text("Sacar"),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // botão histórico
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: ElevatedButton.icon(
+                                onPressed: _abrirHistorico,
+                                icon: const Icon(Icons.receipt_long_outlined),
+                                label: const Text("Ver Histórico"),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white.withOpacity(
+                                    0.15,
+                                  ),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  side: const BorderSide(
+                                    color: Colors.white54,
+                                    width: 1,
                                   ),
                                 ),
                               ),
                             ),
                           ],
+<<<<<<< HEAD
                         ),
 
                         const SizedBox(height: 12),
@@ -752,6 +928,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                       ],
+=======
+                        );
+                      },
+>>>>>>> 18d62b95e33d087ef25a84a5577f8de94f5843e7
                     ),
                   ),
                 ),
@@ -763,23 +943,35 @@ class _ProfilePageState extends State<ProfilePage> {
                   icon: Icons.person_outline,
                   title: "Dados Pessoais",
                   subtitle: "Editar informações da conta",
+<<<<<<< HEAD
                   onTap: () {
                     // TODO: navegar para EditarDadosPessoaisPage
                   },
+=======
+                  onTap: () => Navigator.pushNamed(context, '/dados-pessoais'),
+>>>>>>> 18d62b95e33d087ef25a84a5577f8de94f5843e7
                 ),
 
                 // ── Tile de configuração do 2FA com status dinâmico ──
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Material(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18),
+<<<<<<< HEAD
                       onTap: () {
                         // TODO: navegar para a página de configuração do 2FA
                       },
+=======
+                      onTap: is2FAEnabled
+                              ? null
+                              : () => Navigator.pushNamed(context, '/2fa'),
+>>>>>>> 18d62b95e33d087ef25a84a5577f8de94f5843e7
                       child: Container(
                         padding: const EdgeInsets.all(18),
                         child: Row(
@@ -787,12 +979,13 @@ class _ProfilePageState extends State<ProfilePage> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: const Color(0xff2453ff)
-                                    .withOpacity(0.1),
+                                color: const Color(0xff2453ff).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.shield_outlined,
-                                  color: Color(0xff2453ff)),
+                              child: const Icon(
+                                Icons.shield_outlined,
+                                color: Color(0xff2453ff),
+                              ),
                             ),
                             const SizedBox(width: 15),
                             Expanded(
@@ -802,8 +995,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                   const Text(
                                     "Autenticação 2FA",
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   // Texto muda conforme o estado do 2FA
@@ -820,8 +1014,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.arrow_forward_ios,
-                                size: 16, color: Colors.grey),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
                           ],
                         ),
                       ),
@@ -837,6 +1034,56 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () {},
                 ),
 
+                // ── Sair ──
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Material(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: _sair,
+                      child: Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.logout,
+                                color: Colors.red,
+                              ),
+                            ),
+                            const SizedBox(width: 15),
+                            const Expanded(
+                              child: Text(
+                                "Sair da conta",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 30),
               ],
             ),
@@ -846,6 +1093,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+<<<<<<< HEAD
   // ─── WIDGET DO HISTÓRICO (versão inline, atualmente não utilizada na UI) ──
 
   Widget _buildHistorico() {
@@ -1012,6 +1260,8 @@ class _ProfilePageState extends State<ProfilePage> {
   // ─── TILE GENÉRICO ────────────────────────────────────────────────────────
 
   // Widget reutilizável para itens de menu com ícone, título, subtítulo e seta
+=======
+>>>>>>> 18d62b95e33d087ef25a84a5577f8de94f5843e7
   Widget buildTile({
     required IconData icon,
     required String title,
@@ -1047,17 +1297,29 @@ class _ProfilePageState extends State<ProfilePage> {
                       Text(
                         title,
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      Text(subtitle,
-                          style: const TextStyle(color: Colors.grey)),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
                     ],
                   ),
                 ),
+<<<<<<< HEAD
                 // Seta indicando que é navegável
                 const Icon(Icons.arrow_forward_ios,
                     size: 16, color: Colors.grey),
+=======
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey,
+                ),
+>>>>>>> 18d62b95e33d087ef25a84a5577f8de94f5843e7
               ],
             ),
           ),
