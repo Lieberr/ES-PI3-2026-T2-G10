@@ -28,12 +28,14 @@ Widget build(BuildContext context) {
       ...socios.map((socio) {
         final nome = socio['nome'] ?? 'Sócio';
         final percentual = socio['percentual'] ?? 0;
+        final apresentacao = socio['apresentacao'] ?? 'Descrição não disponível';
         return Padding(
           padding: const EdgeInsets.only(bottom: 14),
           child: structureMemberCard(
             name: nome,
             role: 'Sócio',
             percentage: '$percentual%',
+            introduction: apresentacao,
           ),
         );
       }).toList(),
@@ -51,6 +53,7 @@ Widget build(BuildContext context) {
   required String name,
   required String role,
   required String percentage,
+  required String introduction,
 }) {
   return Container(
     padding: const EdgeInsets.all(16),
@@ -99,6 +102,12 @@ Widget build(BuildContext context) {
                   color: Color(0xFF6B7280),
                 ),
               ),
+              Text(
+                introduction,
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                ),
+              )
             ],
           ),
         ),
