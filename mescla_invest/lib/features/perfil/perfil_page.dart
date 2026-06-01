@@ -17,20 +17,26 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  // Controla se o 2FA está ativado ou não
   bool is2FAEnabled = false;
+
+  // Armazena a imagem de perfil selecionada localmente
   File? _profileImage;
 
+  // Instância do seletor de imagem da galeria
   final ImagePicker _picker = ImagePicker();
 
+  // Instância do Firebase Functions apontando para a região do Brasil
   final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
     region: 'southamerica-east1',
   );
 
   // ─── Streams ─────────────────────────────────────────────────────────────
 
+  // Retorna um stream com o saldo em tempo real do usuário logado
   Stream<double> _saldoStream() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return Stream.value(0.0);
+    if (user == null) return Stream.value(0.0); // Sem usuário, retorna 0
     return FirebaseFirestore.instance
         .collection('carteiras')
         .doc(user.uid)
@@ -38,6 +44,7 @@ class _ProfilePageState extends State<ProfilePage> {
         .map((doc) => (doc.data()?['saldo'] as num?)?.toDouble() ?? 0.0);
   }
 
+  // Retorna um stream com as operações (depósitos/saques) do usuário, ordenadas por data
   Stream<QuerySnapshot> _movimentacoesStream() {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     return FirebaseFirestore.instance
@@ -48,6 +55,7 @@ class _ProfilePageState extends State<ProfilePage> {
         .snapshots();
   }
 
+  // Retorna um stream com as transações de tokens do usuário no mercado primário
   Stream<QuerySnapshot> _tokensStream() {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     return FirebaseFirestore.instance
@@ -59,10 +67,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
 
+  // Formata um double para o padrão monetário brasileiro (ex: R$ 1.500,00)
   String _formatarMoeda(double valor) {
     return "R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}";
   }
 
+  // Formata um Timestamp do Firestore para string legível (DD/MM/AAAA HH:MM)
   String _formatarData(Timestamp? timestamp) {
     if (timestamp == null) return "--";
     final dt = timestamp.toDate();
@@ -75,12 +85,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ─── HISTÓRICO ───────────────────────────────────────────────────────────
 
+  // Abre um Dialog com abas de histórico de Saldo e Tokens
   void _abrirHistorico() {
     showDialog(
       context: context,
       builder: (context) {
         return DefaultTabController(
-          length: 2,
+          length: 2, // Duas abas: Saldo e Tokens
           child: Dialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
@@ -88,10 +99,10 @@ class _ProfilePageState extends State<ProfilePage> {
             insetPadding: const EdgeInsets.symmetric(
                 horizontal: 16, vertical: 40),
             child: SizedBox(
-              height: MediaQuery.of(context).size.height * 0.65,
+              height: MediaQuery.of(context).size.height * 0.65, // 65% da altura da tela
               child: Column(
                 children: [
-                  // ── Cabeçalho ──
+                  // ── Cabeçalho do dialog com ícone e botão de fechar ──
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 8, 0),
                     child: Row(
@@ -115,7 +126,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
 
-                  // ── Abas ──
+                  // ── Barra de abas ──
                   const TabBar(
                     indicatorColor: Color(0xff2453ff),
                     labelColor: Color(0xff2453ff),
@@ -126,12 +137,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
 
-                  // ── Conteúdo das abas ──
+                  // ── Conteúdo de cada aba ──
                   Expanded(
                     child: TabBarView(
                       children: [
-                        _listaMovimentacoes(),
-                        _listaTokens(),
+                        _listaMovimentacoes(), // Aba de movimentações de saldo
+                        _listaTokens(),        // Aba de transações de tokens
                       ],
                     ),
                   ),
@@ -144,11 +155,12 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── Aba Saldo ──
+  // ── Lista de movimentações de saldo (aba "Saldo") ──
   Widget _listaMovimentacoes() {
     return StreamBuilder<QuerySnapshot>(
       stream: _movimentacoesStream(),
       builder: (context, snapshot) {
+        // Enquanto carrega, exibe indicador de progresso
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -158,10 +170,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
         final docs = snapshot.data?.docs ?? [];
 
+        // Se não há documentos, exibe estado vazio
         if (docs.isEmpty) {
           return _listaVazia("Nenhuma movimentação ainda.");
         }
 
+        // Monta a lista de cards de movimentação
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
           itemCount: docs.length,
@@ -172,6 +186,7 @@ class _ProfilePageState extends State<ProfilePage> {
             final timestamp = data['realizadoEm'] as Timestamp?;
             final isDeposito = tipo == 'deposito';
 
+            // Renderiza card diferenciado por tipo (depósito = verde / saque = vermelho)
             return _itemCard(
               icone: isDeposito
                   ? Icons.arrow_downward_rounded
@@ -188,7 +203,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── Aba Tokens ──
+  // ── Lista de transações de tokens (aba "Tokens") ──
   Widget _listaTokens() {
     return StreamBuilder<QuerySnapshot>(
       stream: _tokensStream(),
@@ -220,6 +235,7 @@ class _ProfilePageState extends State<ProfilePage> {
             final timestamp = data['data'] as Timestamp?;
             final isCompra = tipo == 'compra';
 
+            // Exibe compra (verde) ou venda (vermelho) com detalhes da startup
             return _itemCard(
               icone: isCompra
                   ? Icons.trending_up_rounded
@@ -228,8 +244,7 @@ class _ProfilePageState extends State<ProfilePage> {
               titulo: "${isCompra ? 'Compra' : 'Venda'} · $startupId",
               subtitulo:
                   "$quantidade token${quantidade > 1 ? 's' : ''} · R\$ ${valorUnitario.toStringAsFixed(2).replaceAll('.', ',')} cada\n${_formatarData(timestamp)}",
-              valor:
-                  "${isCompra ? '-' : '+'} ${_formatarMoeda(valorTotal)}",
+              valor: "${isCompra ? '-' : '+'} ${_formatarMoeda(valorTotal)}",
               corValor: isCompra ? Colors.red : Colors.green,
             );
           },
@@ -238,7 +253,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── Card reutilizável ──
+  // ── Card reutilizável para exibir qualquer item de lista ──
   Widget _itemCard({
     required IconData icone,
     required Color corIcone,
@@ -257,6 +272,7 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: const EdgeInsets.all(14),
         child: Row(
           children: [
+            // Ícone colorido com fundo suave
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -266,6 +282,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Icon(icone, color: corIcone, size: 20),
             ),
             const SizedBox(width: 12),
+            // Título e subtítulo à esquerda
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,6 +302,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const SizedBox(width: 8),
+            // Valor colorido à direita
             Text(
               valor,
               style: TextStyle(
@@ -298,7 +316,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── Estado vazio ──
+  // ── Widget exibido quando uma lista está vazia ──
   Widget _listaVazia(String mensagem) {
     return Center(
       child: Column(
@@ -316,12 +334,13 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-
   // ─── SAQUE ────────────────────────────────────────────────────────────────
 
+  // Abre dialog para o usuário digitar o valor do saque e chama a Cloud Function
   Future<void> _iniciarSaque() async {
     final valorController = TextEditingController();
 
+    // Exibe dialog para entrada do valor
     final double? valor = await showDialog<double>(
       context: context,
       builder: (context) {
@@ -354,9 +373,11 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
 
+    // Cancela se o valor for nulo ou inválido
     if (valor == null || valor <= 0) return;
 
     try {
+      // Chama a Cloud Function 'sacar' passando o valor
       await _functions.httpsCallable('sacar').call({'valor': valor});
 
       if (mounted) {
@@ -368,6 +389,7 @@ class _ProfilePageState extends State<ProfilePage> {
         );
       }
     } on FirebaseFunctionsException catch (e) {
+      // Erro vindo da Cloud Function (ex: saldo insuficiente)
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -377,6 +399,7 @@ class _ProfilePageState extends State<ProfilePage> {
         );
       }
     } catch (e) {
+      // Erro inesperado genérico
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -390,6 +413,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ─── DEPÓSITO ─────────────────────────────────────────────────────────────
 
+  // Primeiro passo: coleta o valor que o usuário deseja depositar
   Future<void> _iniciarAdicaoSaldo() async {
     final valorController = TextEditingController();
 
@@ -426,11 +450,13 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
 
+    // Se valor válido, avança para confirmação de pagamento
     if (valorInformado != null && valorInformado > 0) {
       _perguntarSePagou(valorInformado);
     }
   }
 
+  // Segundo passo: pergunta se o pagamento externo já foi efetuado
   Future<void> _perguntarSePagou(double valor) async {
     final bool? pagou = await showDialog<bool>(
       context: context,
@@ -456,6 +482,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (pagou == true) {
       try {
+        // Chama a Cloud Function 'depositar' para registrar o saldo
         await _functions.httpsCallable('depositar').call({'valor': valor});
 
         if (mounted) {
@@ -486,10 +513,12 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       }
     } else if (pagou == false) {
+      // Se não pagou, pergunta se quer cancelar ou tentar novamente
       _perguntarSeCancela(valor);
     }
   }
 
+  // Terceiro passo (opcional): confirma se o usuário quer cancelar o depósito
   Future<void> _perguntarSeCancela(double valor) async {
     final bool? cancelou = await showDialog<bool>(
       context: context,
@@ -512,13 +541,16 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
 
+    // Se escolheu "Voltar", retorna ao passo de confirmação de pagamento
     if (cancelou == false) {
       _perguntarSePagou(valor);
     }
+    // Se confirmou cancelamento, o fluxo termina sem fazer nada
   }
 
   // ─── IMAGEM DE PERFIL ─────────────────────────────────────────────────────
 
+  // Abre a galeria do dispositivo e atualiza a foto de perfil localmente
   Future<void> pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
@@ -542,9 +574,11 @@ class _ProfilePageState extends State<ProfilePage> {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
+      // Escuta mudanças de autenticação em tempo real
       body: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, authSnapshot) {
+          // Enquanto não há dados de autenticação, mostra loading
           if (!authSnapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -556,12 +590,13 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 const SizedBox(height: 20),
 
-                // ── Foto de perfil ──
+                // ── Foto de perfil com botão de edição ──
                 Center(
                   child: Column(
                     children: [
                       Stack(
                         children: [
+                          // Avatar: mostra imagem local ou ícone padrão
                           CircleAvatar(
                             radius: 55,
                             backgroundColor:
@@ -574,6 +609,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     size: 60, color: Color(0xff2453ff))
                                 : null,
                           ),
+                          // Botão de câmera posicionado no canto inferior direito
                           Positioned(
                             bottom: 0,
                             right: 0,
@@ -593,6 +629,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                       ),
                       const SizedBox(height: 15),
+                      // Nome e e-mail do usuário logado
                       Text(
                         user.displayName ?? 'Usuário',
                         style: const TextStyle(
@@ -610,7 +647,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                 const SizedBox(height: 25),
 
-                // ── Card Carteira ──
+                // ── Card de carteira com saldo e ações ──
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
@@ -625,7 +662,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Saldo ──
+                        // ── Saldo em tempo real via stream ──
                         const Text(
                           "Saldo Disponível",
                           style: TextStyle(
@@ -658,7 +695,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                         const SizedBox(height: 20),
 
-                        // ── Botões Depositar / Sacar ──
+                        // ── Botões de ação: Depositar e Sacar lado a lado ──
                         Row(
                           children: [
                             Expanded(
@@ -696,7 +733,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                         const SizedBox(height: 12),
 
-                        // ── Botão Histórico ──
+                        // ── Botão para abrir o histórico de movimentações ──
                         SizedBox(
                           width: double.infinity,
                           height: 50,
@@ -721,17 +758,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
                 const SizedBox(height: 25),
 
-                // ── Dados Pessoais ──
+                // ── Tile de navegação para editar dados pessoais ──
                 buildTile(
                   icon: Icons.person_outline,
                   title: "Dados Pessoais",
                   subtitle: "Editar informações da conta",
                   onTap: () {
-                    // Navigator aqui
+                    // TODO: navegar para EditarDadosPessoaisPage
                   },
                 ),
 
-                // ── 2FA ──
+                // ── Tile de configuração do 2FA com status dinâmico ──
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 8),
@@ -741,7 +778,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18),
                       onTap: () {
-                        // Navigator aqui
+                        // TODO: navegar para a página de configuração do 2FA
                       },
                       child: Container(
                         padding: const EdgeInsets.all(18),
@@ -769,6 +806,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                         fontSize: 16),
                                   ),
                                   const SizedBox(height: 4),
+                                  // Texto muda conforme o estado do 2FA
                                   Text(
                                     is2FAEnabled
                                         ? "Proteção Ativada"
@@ -791,7 +829,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
 
-                // ── Ajuda ──
+                // ── Tile de suporte ──
                 buildTile(
                   icon: Icons.help_outline,
                   title: "Ajuda e Suporte",
@@ -808,7 +846,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ─── WIDGET DO HISTÓRICO ──────────────────────────────────────────────────
+  // ─── WIDGET DO HISTÓRICO (versão inline, atualmente não utilizada na UI) ──
 
   Widget _buildHistorico() {
     return Padding(
@@ -869,6 +907,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               }
 
+              // Mapeia cada documento em um card de movimentação
               return Column(
                 children: docs.map((doc) {
                   final data = doc.data() as Map<String, dynamic>;
@@ -896,7 +935,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       padding: const EdgeInsets.all(14),
                       child: Row(
                         children: [
-                          // ── Ícone ──
+                          // Ícone colorido por tipo
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
@@ -917,7 +956,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                           const SizedBox(width: 12),
 
-                          // ── Tipo e data ──
+                          // Tipo, descrição e data
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -929,6 +968,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                       fontSize: 14),
                                 ),
                                 const SizedBox(height: 3),
+                                // Exibe descrição apenas se existir
                                 if (descricao.isNotEmpty)
                                   Text(
                                     descricao,
@@ -946,7 +986,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
 
-                          // ── Valor ──
+                          // Valor com sinal e cor
                           Text(
                             "${isDeposito ? '+' : '-'} ${_formatarMoeda(valor)}",
                             style: TextStyle(
@@ -971,6 +1011,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // ─── TILE GENÉRICO ────────────────────────────────────────────────────────
 
+  // Widget reutilizável para itens de menu com ícone, título, subtítulo e seta
   Widget buildTile({
     required IconData icon,
     required String title,
@@ -989,6 +1030,7 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.all(18),
             child: Row(
               children: [
+                // Ícone com fundo azul suave
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
@@ -1013,6 +1055,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                 ),
+                // Seta indicando que é navegável
                 const Icon(Icons.arrow_forward_ios,
                     size: 16, color: Colors.grey),
               ],
