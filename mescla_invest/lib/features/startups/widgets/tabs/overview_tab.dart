@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../token_history_chart.dart';
 import 'buyToken_page.dart';
 import 'sellToken_page.dart';
+import '/features/balcao/balcao_startup_page.dart';
 
 class OverviewTab extends StatelessWidget {
   final Map<String, dynamic> startup;
@@ -155,7 +156,12 @@ class OverviewTab extends StatelessWidget {
           const SizedBox(height: 8),
           ElevatedButton.icon(
             onPressed: () {
-              // navegar para tela do balcão
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BalcaoStartupPage(startup: startup),
+                ),
+              );
             },
             icon: const Icon(Icons.store_outlined),
             label: const Text('Acessar Balcão de Negociações'),

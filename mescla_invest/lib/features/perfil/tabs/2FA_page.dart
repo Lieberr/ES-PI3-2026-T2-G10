@@ -1,6 +1,7 @@
 //Feito por Gustavo Lieb RA: 24023376
 
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,6 +18,29 @@ class _Email2FaPageState extends State<Email2FAPage> {
 
   bool codeSent = false;
   bool isVerified = false;
+  bool _jaAtivo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _verificarSeJaAtivo();
+  }
+
+  Future<void> _verificarSeJaAtivo() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final doc = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(uid)
+          .get();
+
+    if (mounted) {
+      setState(() {
+        _jaAtivo = doc.data()?['twofaEnabled'] == true;
+      });
+    }
+  }
 
 
   Future<void> sendCode() async {
@@ -106,7 +130,30 @@ class _Email2FaPageState extends State<Email2FAPage> {
         iconTheme: const IconThemeData(color: Colors.black),
       ),
 
-      body: Padding(
+      body: _jaAtivo
+    ? const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.verified_user, size: 80, color: Colors.green),
+            SizedBox(height: 16),
+            Text(
+              '2FA já está ativado!',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Sua conta já está protegida.',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      )
+    : Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
