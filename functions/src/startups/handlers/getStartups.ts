@@ -13,7 +13,13 @@ import {
   buscarTokenUsuario,
 } from "../../carteira/repositories/carteiraRepository";
 
-// Calcula a variação percentual do token no último mês
+
+/**
+ * Calcula a variação percentual do token no último mês
+ * @param {string} startupId - ID da startup
+ * @param {number} valorAtual - Valor atual do preço do token da startup
+ * @return {Promise<number>}
+ */
 async function calcularVariacaoMensal(
   startupId: string,
   valorAtual: number
@@ -41,7 +47,7 @@ async function calcularVariacaoMensal(
 export const getStartups = onCall(
   async (request: CallableRequest<void>) => {
     const uid = request.auth?.uid;
-    if(!uid) {
+    if (!uid) {
       throw new HttpsError(
         "unauthenticated",
         "Usuário não autenticado."
@@ -107,7 +113,7 @@ export const getStartupById = onCall(
 export const getStartupPorEstagio = onCall(
   async (request: CallableRequest<{estagio: string}>) => {
     const uid = request.auth?.uid;
-    if(!uid) {
+    if (!uid) {
       throw new HttpsError(
         "unauthenticated",
         "Usuário não autenticado."

@@ -1,5 +1,5 @@
 import sgMail from "@sendgrid/mail";
-import { defineSecret } from "firebase-functions/params";
+import {defineSecret} from "firebase-functions/params";
 
 export const sendgridKey = defineSecret("SENDGRID_API_KEY");
 

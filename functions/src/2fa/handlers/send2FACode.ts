@@ -1,12 +1,11 @@
 import {onCall, CallableRequest, HttpsError} from "firebase-functions/https";
 import {Timestamp} from "firebase-admin/firestore";
-import {enviarCodigoEmail} from "../shared/sendgrid";
+import {enviarCodigoEmail, sendgridKey} from "../shared/sendgrid";
 import {
   salvarCodigo2FA,
   buscarCodigo2FA,
 } from "../repositories/twofaRepository";
 import * as crypto from "crypto";
-import { sendgridKey } from "../shared/sendgrid";
 
 
 export const send2FACode = onCall(

@@ -1,4 +1,4 @@
-//Feito Por Gustavo Lieb Figueira RA: 24023376
+// Feito Por Gustavo Lieb Figueira RA: 24023376
 
 import {CallableRequest, HttpsError, onCall} from "firebase-functions/v2/https";
 import {buscarTokenUsuario} from "../repositories/carteiraRepository";
@@ -30,7 +30,10 @@ export const getHistoricoPortfolio = onCall(
       snap.docs.forEach((doc) => {
         const data = doc.data();
         const date = data.data.toDate();
-        const label = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        const label = `${date.getDate()}/${date.getMonth() +
+           1}/${date.getFullYear()} 
+           ${String(date.getHours()).padStart(2, "0")}:
+           ${String(date.getMinutes()).padStart(2, "0")}`;
         const valorToken = data.valorToken ?? 0;
         const valorTotal = valorToken * token.quantidade;
 
@@ -48,7 +51,8 @@ export const getHistoricoPortfolio = onCall(
     pontos.sort((a, b) => {
       const [dA, mA, yA] = a.label.split("/").map(Number);
       const [dB, mB, yB] = b.label.split("/").map(Number);
-      return new Date(yA, mA - 1, dA).getTime() - new Date(yB, mB - 1, dB).getTime();
+      return new Date(yA, mA - 1, dA).getTime() - new Date(yB, mB - 1, dB)
+        .getTime();
     });
 
     return {pontos};

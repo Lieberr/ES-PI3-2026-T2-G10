@@ -40,16 +40,20 @@ export const getPortfolio = onCall(
       const startup = startups[index];
       if (!startup) return null;
 
-      const precoMedio = token.quantidade > 0 ?
-        token.valorInvestido / token.quantidade :
-        0;
+      const totalTokens =
+        token.quantidade + (token.quantidadeReservada ?? 0);
+      const precoMedio = totalTokens > 0
+        ? token.valorInvestido / totalTokens
+        : 0;
 
-      const valorAtual = startup.valorToken * token.quantidade;
+      const valorAtual = startup.valorToken * totalTokens;
 
-      const variacao = token.valorInvestido > 0 ?
-        ((valorAtual - token.valorInvestido) /
-            token.valorInvestido) * 100 :
-        0;
+
+      // Compara o valor atual com o que custaria comprar esses tokens pelo preço médio
+      const valorInvestidoAtual = precoMedio * token.quantidade;
+      const variacao = precoMedio > 0
+        ? ((startup.valorToken - precoMedio) / precoMedio) * 100
+        : 0;
 
       return {
         startupId: token.startupId,
