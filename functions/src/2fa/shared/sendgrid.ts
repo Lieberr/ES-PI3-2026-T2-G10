@@ -1,3 +1,6 @@
+// Feito por Gustavo Lieb RA: 24023376
+
+
 import sgMail from "@sendgrid/mail";
 import {defineSecret} from "firebase-functions/params";
 
