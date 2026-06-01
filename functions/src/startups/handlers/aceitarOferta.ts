@@ -91,10 +91,13 @@ export const aceitarOferta = onCall(
       const valorInvestidoVendedor = tokenVendedor?.valorInvestido ?? 0;
       const precoMedioVendedor = valorInvestidoVendedor / quantidadeVendedor;
       const valorInvestidoVendido = precoMedioVendedor * oferta.quantidade;
-
       const tokenComprador = tokensComprador?.find(
         (t) => t.startupId === oferta.startupId
       );
+      const novoValorInvestidoComprador =
+        (tokenComprador?.valorInvestido ?? 0) + oferta.valorTotal;
+      const novaQuantidadeComprador =
+        (tokenComprador?.quantidade ?? 0) + oferta.quantidade;
 
       await db.runTransaction(async (transaction) => {
         const carteiraRef = db.collection("carteiras").doc(uid);
@@ -114,6 +117,10 @@ export const aceitarOferta = onCall(
         transaction.set(tokenRef, {
           quantidade: quantidadeVendedor - oferta.quantidade,
           valorInvestido: valorInvestidoVendedor - valorInvestidoVendido,
+          precoMedio: (quantidadeVendedor - oferta.quantidade) > 0 ?
+            (valorInvestidoVendedor - valorInvestidoVendido) /
+              (quantidadeVendedor - oferta.quantidade) :
+            0,
         }, {merge: true});
 
         transaction.update(carteiraRefComprador, {
@@ -123,10 +130,11 @@ export const aceitarOferta = onCall(
 
         transaction.set(tokenRefComprador, {
           startupId: oferta.startupId,
-          quantidade:
-            (tokenComprador?.quantidade ?? 0) + oferta.quantidade,
-          valorInvestido:
-            (tokenComprador?.valorInvestido ?? 0) + oferta.valorTotal,
+          quantidade: novaQuantidadeComprador,
+          valorInvestido: novoValorInvestidoComprador,
+          precoMedio: novaQuantidadeComprador > 0 ?
+            novoValorInvestidoComprador / novaQuantidadeComprador :
+            0,
         }, {merge: true});
 
         transaction.update(ofertaRef, {
@@ -182,6 +190,14 @@ export const aceitarOferta = onCall(
         valorInvestidoVendedor / totalTokensVendedor :
         0;
       const valorInvestidoVendido = precoMedioVendedor * oferta.quantidade;
+      const novoValorInvestidoComprador =
+        (tokenComprador?.valorInvestido ?? 0) + oferta.valorTotal;
+      const novaQuantidadeComprador =
+        (tokenComprador?.quantidade ?? 0) + oferta.quantidade;
+      const novaQuantidadeVendedor =
+        (tokenVendedor?.quantidadeReservada ?? 0) - oferta.quantidade;
+      const novoValorInvestidoVendedor =
+        valorInvestidoVendedor - valorInvestidoVendido;
 
       await db.runTransaction(async (transaction) => {
         const carteiraRef = db.collection("carteiras").doc(uid);
@@ -200,10 +216,11 @@ export const aceitarOferta = onCall(
 
         transaction.set(tokenRef, {
           startupId: oferta.startupId,
-          quantidade:
-            (tokenComprador?.quantidade ?? 0) + oferta.quantidade,
-          valorInvestido:
-            (tokenComprador?.valorInvestido ?? 0) + oferta.valorTotal,
+          quantidade: novaQuantidadeComprador,
+          valorInvestido: novoValorInvestidoComprador,
+          precoMedio: novaQuantidadeComprador > 0 ?
+            novoValorInvestidoComprador / novaQuantidadeComprador :
+            0,
         }, {merge: true});
 
         transaction.update(carteiraRefVendedor, {
@@ -211,9 +228,11 @@ export const aceitarOferta = onCall(
         });
 
         transaction.set(tokenRefVendedor, {
-          quantidadeReservada:
-            (tokenVendedor?.quantidadeReservada ?? 0) - oferta.quantidade,
-          valorInvestido: valorInvestidoVendedor - valorInvestidoVendido,
+          quantidadeReservada: novaQuantidadeVendedor,
+          valorInvestido: novoValorInvestidoVendedor,
+          precoMedio: (tokenVendedor?.quantidade ?? 0) > 0 ?
+            novoValorInvestidoVendedor / (tokenVendedor?.quantidade ?? 1) :
+            0,
         }, {merge: true});
 
         transaction.update(ofertaRef, {

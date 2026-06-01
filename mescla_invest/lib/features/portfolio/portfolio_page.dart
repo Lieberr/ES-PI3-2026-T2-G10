@@ -15,18 +15,30 @@ class PortfolioPage extends StatefulWidget {
 }
 
 class _PortfolioPageState extends State<PortfolioPage> {
-  final _functions = FirebaseFunctions.instanceFor(region: 'southamerica-east1');
+  final _functions = FirebaseFunctions.instanceFor(
+    region: 'southamerica-east1',
+  );
 
   TimeFilter _filtro = TimeFilter.monthly;
   Map<String, dynamic> _resumo = {};
   List<Map<String, dynamic>> _itens = [];
   bool _carregando = true;
-  List<Map<String, dynamic>> _historico = [];  // <-- substituiu _pontosPortfolio
+  List<Map<String, dynamic>> _historico = []; // <-- substituiu _pontosPortfolio
 
   @override
   void initState() {
     super.initState();
     carregarPortfolio();
+  }
+
+  // recarrega automaticamente quando volta para esta tela
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent) {
+      carregarPortfolio();
+    }
   }
 
   // Filtra _historico pelo período selecionado
@@ -61,93 +73,96 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Future<void> carregarPortfolio() async {
-  try {
-    final callable = _functions.httpsCallable('getPortfolio');
-    final result = await callable.call();
+    try {
+      final callable = _functions.httpsCallable('getPortfolio');
+      final result = await callable.call();
 
-    final itens = List<Map<String, dynamic>>.from(
-      (result.data['itens'] ?? []).map((e) => Map<String, dynamic>.from(e)),
-    );
-
-    // Guarda histórico separado por startup
-    // { startupId: [ {data, valorToken}, ... ] }
-    final historicosPorStartup = <String, List<Map<String, dynamic>>>{};
-    final quantidadesPorStartup = <String, double>{};
-
-    for (final item in itens) {
-      final startupId = item['startupId'] as String? ?? '';
-      if (startupId.isEmpty) continue;
-
-      final res = await _functions
-          .httpsCallable('getHistoricoToken')
-          .call({'startupId': startupId});
-
-      final historico = List<Map<String, dynamic>>.from(
-        (res.data['historicoGrafico'] ?? []).map((e) => Map<String, dynamic>.from(e)),
+      final itens = List<Map<String, dynamic>>.from(
+        (result.data['itens'] ?? []).map((e) => Map<String, dynamic>.from(e)),
       );
 
-      historicosPorStartup[startupId] = historico;
-      quantidadesPorStartup[startupId] =
-          (item['quantidade'] as num?)?.toDouble() ?? 0;
-    }
+      // Guarda histórico separado por startup
+      // { startupId: [ {data, valorToken}, ... ] }
+      final historicosPorStartup = <String, List<Map<String, dynamic>>>{};
+      final quantidadesPorStartup = <String, double>{};
 
-    // Coleta todas as datas únicas de todas as startups
-    final todasAsDatas = <String>{};
-    for (final historico in historicosPorStartup.values) {
-      for (final ponto in historico) {
-        final data = (ponto['data'] as String?)?.split('T')[0];
-        if (data != null) todasAsDatas.add(data);
-      }
-    }
+      for (final item in itens) {
+        final startupId = item['startupId'] as String? ?? '';
+        if (startupId.isEmpty) continue;
 
-    final datasOrdenadas = todasAsDatas.toList()..sort();
-
-    // Para cada data, pega o último preço conhecido de cada startup
-    final historicoFinal = <Map<String, dynamic>>[];
-    final ultimoPreco = <String, double>{}; // último preço conhecido por startup
-
-    for (final dia in datasOrdenadas) {
-      double valorTotalDia = 0;
-
-      for (final startupId in historicosPorStartup.keys) {
-        final historico = historicosPorStartup[startupId]!;
-        final quantidade = quantidadesPorStartup[startupId] ?? 0;
-
-        // Procura se tem registro nesse dia
-        final pontosDoDia = historico.where((p) {
-          final dataPonto = (p['data'] as String?)?.split('T')[0];
-          return dataPonto == dia;
+        final res = await _functions.httpsCallable('getHistoricoToken').call({
+          'startupId': startupId,
         });
 
-        if (pontosDoDia.isNotEmpty) {
-          // Atualiza último preço conhecido
-          ultimoPreco[startupId] =
-              (pontosDoDia.last['valorToken'] as num?)?.toDouble() ?? 0;
-        }
-        // Se não tem registro, usa o último preço conhecido (preenche o buraco)
-        final preco = ultimoPreco[startupId] ?? 0;
-        valorTotalDia += preco * quantidade;
+        final historico = List<Map<String, dynamic>>.from(
+          (res.data['historicoGrafico'] ?? []).map(
+            (e) => Map<String, dynamic>.from(e),
+          ),
+        );
+
+        historicosPorStartup[startupId] = historico;
+        quantidadesPorStartup[startupId] =
+            (item['quantidade'] as num?)?.toDouble() ?? 0;
       }
 
-      historicoFinal.add({'data': dia, 'valorTotal': valorTotalDia});
-    }
+      // Coleta todas as datas únicas de todas as startups
+      final todasAsDatas = <String>{};
+      for (final historico in historicosPorStartup.values) {
+        for (final ponto in historico) {
+          final data = (ponto['data'] as String?)?.split('T')[0];
+          if (data != null) todasAsDatas.add(data);
+        }
+      }
 
-    if (mounted) {
-      setState(() {
-        _resumo = Map<String, dynamic>.from(result.data['resumo'] ?? {});
-        _itens = itens;
-        _historico = historicoFinal;
-        _carregando = false;
-      });
+      final datasOrdenadas = todasAsDatas.toList()..sort();
+
+      // Para cada data, pega o último preço conhecido de cada startup
+      final historicoFinal = <Map<String, dynamic>>[];
+      final ultimoPreco =
+          <String, double>{}; // último preço conhecido por startup
+
+      for (final dia in datasOrdenadas) {
+        double valorTotalDia = 0;
+
+        for (final startupId in historicosPorStartup.keys) {
+          final historico = historicosPorStartup[startupId]!;
+          final quantidade = quantidadesPorStartup[startupId] ?? 0;
+
+          // Procura se tem registro nesse dia
+          final pontosDoDia = historico.where((p) {
+            final dataPonto = (p['data'] as String?)?.split('T')[0];
+            return dataPonto == dia;
+          });
+
+          if (pontosDoDia.isNotEmpty) {
+            // Atualiza último preço conhecido
+            ultimoPreco[startupId] =
+                (pontosDoDia.last['valorToken'] as num?)?.toDouble() ?? 0;
+          }
+          // Se não tem registro, usa o último preço conhecido (preenche o buraco)
+          final preco = ultimoPreco[startupId] ?? 0;
+          valorTotalDia += preco * quantidade;
+        }
+
+        historicoFinal.add({'data': dia, 'valorTotal': valorTotalDia});
+      }
+
+      if (mounted) {
+        setState(() {
+          _resumo = Map<String, dynamic>.from(result.data['resumo'] ?? {});
+          _itens = itens;
+          _historico = historicoFinal;
+          _carregando = false;
+        });
+      }
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('ERRO: ${e.code} | ${e.message}');
+      if (mounted) setState(() => _carregando = false);
+    } catch (e) {
+      debugPrint('ERRO GENERICO: $e');
+      if (mounted) setState(() => _carregando = false);
     }
-  } on FirebaseFunctionsException catch (e) {
-    debugPrint('ERRO: ${e.code} | ${e.message}');
-    if (mounted) setState(() => _carregando = false);
-  } catch (e) {
-    debugPrint('ERRO GENERICO: $e');
-    if (mounted) setState(() => _carregando = false);
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -188,18 +203,24 @@ class _PortfolioPageState extends State<PortfolioPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Valor Total do Portfólio',
-                              style: TextStyle(color: Colors.black54)),
+                          const Text(
+                            'Valor Total do Portfólio',
+                            style: TextStyle(color: Colors.black54),
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             'R\$ ${_formatarReal(totalAtual)}',
                             style: const TextStyle(
-                                fontSize: 32, fontWeight: FontWeight.bold),
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: positivo
                                   ? Colors.green.withOpacity(0.1)
@@ -256,7 +277,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                           const Text(
                             'Evolução do Portfólio',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 20),
                           Row(
@@ -267,7 +290,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                                 onTap: () => setState(() => _filtro = f),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: sel
                                         ? Colors.blue
@@ -277,8 +302,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
                                   child: Text(
                                     _filtroLabel(f),
                                     style: TextStyle(
-                                      color:
-                                          sel ? Colors.white : Colors.black,
+                                      color: sel ? Colors.white : Colors.black,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
@@ -313,7 +337,10 @@ class _PortfolioPageState extends State<PortfolioPage> {
                     // LISTA DE INVESTIMENTOS
                     const Text(
                       'Meus Investimentos',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     if (_itens.isEmpty)
@@ -386,8 +413,10 @@ class _PortfolioPageState extends State<PortfolioPage> {
                 } else {
                   label = 'R\$ ${value.toInt()}';
                 }
-                return Text(label,
-                    style: const TextStyle(fontSize: 10, color: Colors.grey));
+                return Text(
+                  label,
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                );
               },
             ),
           ),
@@ -415,6 +444,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
   Widget _investmentCard(Map<String, dynamic> item) {
     final nome = item['nomeStartup'] ?? '';
     final quantidade = item['quantidade'] ?? 0;
+    final quantidadeReservada =
+        (item['quantidadeReservada'] as num?)?.toInt() ?? 0;
     final valorInvestido = (item['valorInvestido'] as num?)?.toDouble() ?? 0;
     final valorAtual = (item['valorAtual'] as num?)?.toDouble() ?? 0;
     final variacao = (item['variacao'] as num?)?.toDouble() ?? 0;
@@ -436,12 +467,18 @@ class _PortfolioPageState extends State<PortfolioPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(nome,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                nome,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: positivo
                       ? Colors.green.withOpacity(0.1)
@@ -460,8 +497,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
             ],
           ),
           const SizedBox(height: 6),
-          Text('$quantidade tokens',
-              style: const TextStyle(color: Colors.grey)),
+          Text(
+            quantidadeReservada > 0
+                ? '$quantidade tokens + $quantidadeReservada reservados'
+                : '$quantidade tokens',
+            style: const TextStyle(color: Colors.grey),
+          ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -476,10 +517,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Investido: R\$ ${_formatarReal(valorInvestido)}',
-                  style: const TextStyle(fontWeight: FontWeight.w500)),
               Text(
-                '${positivo ? '+' : ''}R\$ ${_formatarReal(lucro)}',
+                'Investido: R\$ ${_formatarReal(valorInvestido)}',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              Text(
+                '${lucro >= 0 ? '+' : ''}R\$ ${_formatarReal(lucro)}',
                 style: TextStyle(
                   color: positivo ? Colors.green : Colors.red,
                   fontWeight: FontWeight.bold,
@@ -496,12 +539,15 @@ class _PortfolioPageState extends State<PortfolioPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(fontSize: 12, color: Colors.black45)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.black45),
+        ),
         const SizedBox(height: 2),
-        Text(valor,
-            style:
-                const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        Text(
+          valor,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
       ],
     );
   }
@@ -525,15 +571,20 @@ class _PortfolioPageState extends State<PortfolioPage> {
             children: [
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 8),
-              Text(title,
-                  style: const TextStyle(
-                      color: Colors.grey, fontWeight: FontWeight.w500)),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          Text(value,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
         ],
       ),
     );
@@ -541,11 +592,16 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
   String _filtroLabel(TimeFilter f) {
     switch (f) {
-      case TimeFilter.daily:     return 'Dia';
-      case TimeFilter.weekly:    return 'Semana';
-      case TimeFilter.monthly:   return 'Mês';
-      case TimeFilter.sixMonths: return '6M';
-      case TimeFilter.ytd:       return 'YTD';
+      case TimeFilter.daily:
+        return 'Dia';
+      case TimeFilter.weekly:
+        return 'Semana';
+      case TimeFilter.monthly:
+        return 'Mês';
+      case TimeFilter.sixMonths:
+        return '6M';
+      case TimeFilter.ytd:
+        return 'YTD';
     }
   }
 
