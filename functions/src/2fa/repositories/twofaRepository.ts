@@ -1,3 +1,6 @@
+// Feito por Gustavo Lieb RA: 24023376
+
+
 import {Timestamp} from "firebase-admin/firestore";
 import {db} from "../../shared/firebase";
 import {TwoFaRecord} from "../types/twofa";

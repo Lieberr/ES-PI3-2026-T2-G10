@@ -1,3 +1,5 @@
+// Feito por Gustavo Lieb RA: 24023376
+
 import {onCall, CallableRequest, HttpsError} from "firebase-functions/https";
 import {Timestamp} from "firebase-admin/firestore";
 import {enviarCodigoEmail} from "../shared/sendgrid";

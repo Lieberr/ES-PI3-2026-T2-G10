@@ -1,4 +1,6 @@
 // Feito por Leonardo Dionel RA: 25010092
+// Feito por Gustavo Lieb RA: 24023376 (primeira versao da tela)
+
 
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';

@@ -1,3 +1,6 @@
+// Feito por Gustavo Lieb RA: 24023376
+
+
 import {onCall, CallableRequest, HttpsError} from "firebase-functions/https";
 import * as crypto from "crypto";
 import {
