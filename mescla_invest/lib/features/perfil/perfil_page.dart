@@ -72,7 +72,9 @@ class _ProfilePageState extends State<ProfilePage> {
   if (confirmar == true) {
     await FirebaseAuth.instance.signOut();
     if (mounted) {
-      Navigator.pushReplacementNamed(context, '/login');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
     }
   }
 }
@@ -99,7 +101,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // todas as operações ficam em 'operacoes'
   Stream<QuerySnapshot> _movimentacoesStream() {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return const Stream.empty();
     return FirebaseFirestore.instance
         .collection('carteiras')
         .doc(uid)
@@ -109,7 +112,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Stream<QuerySnapshot> _tokensStream() {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return const Stream.empty();
     return FirebaseFirestore.instance
         .collection('mercadoPrimario')
         .where('uid', isEqualTo: uid)

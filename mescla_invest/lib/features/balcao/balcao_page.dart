@@ -22,11 +22,13 @@ class _BalcaoPageState extends State<BalcaoPage> {
   List<Map<String, dynamic>> _startups = [];
   String _busca = '';
   bool _carregando = true;
+  bool _inicializando = false;
 
   @override
   void initState() {
     super.initState();
     carregarStartups();
+    _inicializando = true;
   }
 
   // recarrega automaticamente quando volta para esta tela
@@ -35,7 +37,11 @@ class _BalcaoPageState extends State<BalcaoPage> {
     super.didChangeDependencies();
     final route = ModalRoute.of(context);
     if (route != null && route.isCurrent) {
-      carregarStartups();
+      if (_inicializando) {
+        carregarStartups();
+      } else {
+        _inicializando = true;
+      }
     }
   }
 
@@ -49,7 +55,11 @@ class _BalcaoPageState extends State<BalcaoPage> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        if (mounted) Navigator.pushReplacementNamed(context, '/login');
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacementNamed(context, '/login');
+          });
+        }
         return;
       }
 
